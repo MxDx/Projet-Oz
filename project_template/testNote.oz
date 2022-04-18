@@ -16,12 +16,30 @@ local
            end
         end 
     end
+    
     Note
-    Silence
+    SilenceTest
+    TestChords
+
+    fun {ChordToExtended Chord}
+        case Chord
+        of nil then
+            nil
+        [] H|T then
+            H = {NoteToExtended H}
+            H|{ChordToExtended T}
+        end
+    end
+    Chord
+
 in
     Note = {NoteToExtended c}
     {Browse Note}
-    %Test silence
-    Silence = {NoteToExtended 0}
-    {Browse Silence}
+    % SilenceTest = {NoteToExtended silence}
+    % {Browse SilenceTest}
+    TestChords = a1|a2|a3|a4|nil
+
+    {Browse TestChords}
+    Chord = {ChordToExtended TestChords}
+    {Browse Chord}
 end
