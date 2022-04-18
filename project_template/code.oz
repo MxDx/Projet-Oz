@@ -1,7 +1,7 @@
 local
    % See project statement for API details.
    % !!! Please remove CWD identifier when submitting your project !!!
-   CWD = '/directory/to/the/project/template/' % Put here the **absolute** path to the project files
+   CWD = 'project_template/' % Put here the **absolute** path to the project files
    [Project] = {Link [CWD#'Project2022.ozf']}
    Time = {Link ['x-oz://boot/Time']}.1.getReferenceTime
 
