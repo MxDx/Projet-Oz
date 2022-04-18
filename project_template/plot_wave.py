@@ -31,3 +31,4 @@ plt.title(basename(args.filename))
 
 # display the plot
 plt.show()
+
