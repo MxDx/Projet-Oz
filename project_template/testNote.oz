@@ -1,3 +1,4 @@
+declare
 local
     fun {NoteToExtended Note}
         case Note
@@ -26,20 +27,60 @@ local
         of nil then
             nil
         [] H|T then
-            H = {NoteToExtended H}
-            H|{ChordToExtended T}
+            {NoteToExtended H}|{ChordToExtended T}
         end
     end
-    Chord
+
+     % Fonction qui convertis une partition en liste de notes étendues
+ fun {PartitionToTimedList Partition}
+    case Partition 
+    of nil then
+    nil
+    [] H|T then
+       case H 
+       of ChordH|ChordT then
+            case ChordH
+            of note(duration:D instrument:I name:N octave:O sharp:S) then
+                H|{PartitionToTimedList T}
+            else
+                {ChordToExtended H}|{PartitionToTimedList T}
+            end
+        [] note(duration:D instrument:I name:N octave:O sharp:S) then
+            H|{PartitionToTimedList T}
+        else
+            {NoteToExtended H}|{PartitionToTimedList T}
+        end
+    else
+        "input invalide"
+    end
+ end
+
+ fun {DurationToNote 
 
 in
-    Note = {NoteToExtended c}
-    {Browse Note}
-    % SilenceTest = {NoteToExtended silence}
-    % {Browse SilenceTest}
-    TestChords = a1|a2|a3|a4|nil
+    % Note = {NoteToExtended c}
+    % {Browse Note}
+    % % SilenceTest = {NoteToExtended silence}
+    % % {Browse SilenceTest}
+    % TestChords = a1|a2|a3|a4|nil
 
-    {Browse TestChords}
-    Chord = {ChordToExtended TestChords}
-    {Browse Chord}
+    % {Browse TestChords}
+    % Chord = {ChordToExtended TestChords}
+    % {Browse Chord}
+
+    {Browse 0}
+    ListOfNotes = c4|b#6|nil
+    {Browse ListOfNotes}
+    List = {ChordToExtended ListOfNotes}
+    {Browse List}
+    PartitionChord = c4|b#4|ListOfNotes|nil
+   
+    {Browse {PartitionToTimedList PartitionChord}}
+
+    Tuplle = t(1 2)
+    Tuplle.1 = 2
+    {Browse Tuplle}
 end
+
+
+
