@@ -31,31 +31,75 @@ local
         end
     end
 
-     % Fonction qui convertis une partition en liste de notes étendues
- fun {PartitionToTimedList Partition}
-    case Partition 
-    of nil then
-    nil
-    [] H|T then
-       case H 
-       of ChordH|ChordT then
-            case ChordH
-            of note(duration:D instrument:I name:N octave:O sharp:S) then
-                H|{PartitionToTimedList T}
-            else
-                {ChordToExtended H}|{PartitionToTimedList T}
-            end
-        [] note(duration:D instrument:I name:N octave:O sharp:S) then
-            H|{PartitionToTimedList T}
-        else
-            {NoteToExtended H}|{PartitionToTimedList T}
+    fun {DurationTrans DurationTuple}
+        ExtendedPartition = {PartitionToTimedList Duration.1}
+        local fun {Helper Duration Partition}
+            case Partition
+            of  then
+                
+        in
+            {Helper DurationTuple.seconds ExtendedPartition}
         end
-    else
-        "input invalide"
     end
- end
+    
+    fun {StretchTrans ScretchTuple}
+        ExtendedPartition = {PartitionToTimedList Duration.1}
+        local fun {Helper Scretch Partition}
+            case Partition
+            of H|T then 
+                case HPart|TPart
+                    if TPart == nil then
+                        note(name:HPart.name
+                            octave:HPart.octave
+                            sharp:HPart.sharp
+                            duration:HPart.duration * Scretch.factor
+                            instrument:HPart.instrument)
+                    else
+                        note(name:HPart.name
+                            octave:HPart.octave
+                            sharp:HPart.sharp
+                            duration:HPart.duration * Scretch.factor
+                            instrument:HPart.instrument)|{Helper Scretch TPart}
+                    end
+            else
+                "StretchTrans: Error"
+            end
+        in
+            {Helper ScretchTuple ExtendedPartition}
+        end
+    end
 
- fun {DurationToNote 
+    % Fonction qui convertis une partition en liste de notes étendues
+    fun {PartitionToTimedList Partition}
+        case Partition 
+        of nil then
+        nil
+        [] H|T then
+        case H 
+        of ChordH|ChordT then
+                case ChordH
+                of note(duration:D instrument:I name:N octave:O sharp:S) then
+                    H|{PartitionToTimedList T}
+                else
+                    {ChordToExtended H}|{PartitionToTimedList T}
+                end
+            [] note(duration:D instrument:I name:N octave:O sharp:S) then
+                H|{PartitionToTimedList T}
+            [] stretch(factor:F 1:P) then
+                {StretchTrans H}|{PartitionToTimedList T}
+            end
+            [] duration(1:P duration:D) then
+                {DurationTrans H}|{PartitionToTimedList T}
+            end
+            else
+                {NoteToExtended H}|{PartitionToTimedList T}
+            end
+        else
+            "input invalide"
+        end
+    end
+
+  
 
 in
     % Note = {NoteToExtended c}
