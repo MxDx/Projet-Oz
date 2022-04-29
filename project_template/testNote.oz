@@ -134,6 +134,21 @@ local
         end
     end
 
+    fun {DroneTrans DroneTuple}
+        local ExtendedPartition
+            fun {Helper Partition Amount Acc}
+                if Amount == Acc then
+                    Partition|nil 
+                else
+                    Partition|{Helper Partition Amount (Acc+1)}
+                end                
+            end
+        in
+            ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
+            {Helper ExtendedPartition DroneTuple.amount 1}
+        end
+    end
+
     % Fonction qui convertis une partition en liste de notes étendues
     fun {PartitionToTimedList Partition}
         case Partition 
@@ -154,6 +169,8 @@ local
                 {StretchTrans H}|{PartitionToTimedList T}
             [] duration(1:P duration:D) then
                 {DurationTrans H}|{PartitionToTimedList T}
+            [] drone(note:_ amount:_) then
+                {DroneTrans H}|{PartitionToTimedList T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
@@ -189,7 +206,7 @@ in
 
     % {Browse {PartitionToTimedList Tuple.1|nil}}
     {Browse {StretchTrans Tuple}}
-    {Browse {PartitionToTimedList Tuple|nil}}
+    {Browse {PartitionToTimedList Tuple|drone(note:a amount:4)|nil}}
 end
 
 
