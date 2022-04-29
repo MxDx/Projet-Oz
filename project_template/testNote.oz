@@ -31,40 +31,62 @@ local
         end
     end
 
-    fun {DurationTrans DurationTuple}
-        ExtendedPartition = {PartitionToTimedList Duration.1}
-        local fun {Helper Duration Partition}
-            case Partition
-            of  then
-                
-        in
-            {Helper DurationTuple.seconds ExtendedPartition}
-        end
-    end
+    % fun {DurationTrans DurationTuple}
+    %     ExtendedPartition = {PartitionToTimedList Duration.1}
+    %     local fun {Helper Duration Partition}
+    %         case Partition
+    %         of H|T then
+    %             case H
+    %             of HPart|TPart then
+    %                 if TPart == nil then
+    %                     note(name:HPart.name
+    %                         octave:HPart.octave
+    %                         sharp:HPart.sharp
+    %                         duration:Duration
+    %                         instrument:HPart.instrument)
+    %                 else
+    %                     note(name:HPart.name
+    %                         octave:HPart.octave
+    %                         sharp:HPart.sharp
+    %                         duration:HPart.Duration
+    %                         instrument:HPart.instrument)|{Helper Duration TPart}
+    %                 end
+    %             else
+    %                 "DurationTrans: Error"
+    %             end
+    %         end
+    %     in
+    %         {Helper DurationTuple.seconds ExtendedPartition}
+    %     end
+    % end
     
     fun {StretchTrans ScretchTuple}
-        ExtendedPartition = {PartitionToTimedList Duration.1}
-        local fun {Helper Scretch Partition}
-            case Partition
-            of H|T then 
-                case HPart|TPart
-                    if TPart == nil then
-                        note(name:HPart.name
-                            octave:HPart.octave
-                            sharp:HPart.sharp
-                            duration:HPart.duration * Scretch.factor
-                            instrument:HPart.instrument)
-                    else
-                        note(name:HPart.name
-                            octave:HPart.octave
-                            sharp:HPart.sharp
-                            duration:HPart.duration * Scretch.factor
-                            instrument:HPart.instrument)|{Helper Scretch TPart}
+        local ExtendedPartition 
+            fun {Helper Scretch Partition}
+                case Partition
+                of H|T then 
+                    case H
+                    of HPart|TPart then
+                        if TPart == nil then
+                            note(name:HPart.name
+                                octave:HPart.octave
+                                sharp:HPart.sharp
+                                duration:HPart.duration * Scretch.factor
+                                instrument:HPart.instrument)
+                        else
+                            note(name:HPart.name
+                                octave:HPart.octave
+                                sharp:HPart.sharp
+                                duration:HPart.duration * Scretch.factor
+                                instrument:HPart.instrument)|{Helper Scretch TPart}
+                        end
                     end
-            else
-                "StretchTrans: Error"
+                else
+                    "StretchTrans: Error"
+                end
             end
         in
+            ExtendedPartition = {PartitionToTimedList ScretchTuple.1}
             {Helper ScretchTuple ExtendedPartition}
         end
     end
@@ -75,11 +97,11 @@ local
         of nil then
         nil
         [] H|T then
-        case H 
-        of ChordH|ChordT then
+            case H 
+            of ChordH|ChordT then
                 case ChordH
                 of note(duration:D instrument:I name:N octave:O sharp:S) then
-                    H|{PartitionToTimedList T}
+                        H|{PartitionToTimedList T}
                 else
                     {ChordToExtended H}|{PartitionToTimedList T}
                 end
@@ -87,10 +109,8 @@ local
                 H|{PartitionToTimedList T}
             [] stretch(factor:F 1:P) then
                 {StretchTrans H}|{PartitionToTimedList T}
-            end
-            [] duration(1:P duration:D) then
-                {DurationTrans H}|{PartitionToTimedList T}
-            end
+            % [] duration(1:P duration:D) then
+            %     {DurationTrans H}|{PartitionToTimedList T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
@@ -121,9 +141,10 @@ in
    
     {Browse {PartitionToTimedList PartitionChord}}
 
-    Tuplle = t(1 2)
-    Tuplle.1 = 2
-    {Browse Tuplle}
+    Tuple = stretch(factor:1.5 1:c)
+    {Browse Tuple}
+
+    {Browse {StretchTrans Tuple}}
 end
 
 
