@@ -77,15 +77,23 @@ local
                             note(name:HPart.name
                                 octave:HPart.octave
                                 sharp:HPart.sharp
-                                duration:HPart.Duration
+                                duration:Duration
                                 instrument:HPart.instrument)|{Helper Duration TPart}
                         end
                     else
-                        note(name:H.name
-                            octave:H.octave
-                            sharp:H.sharp
-                            duration:Duration
-                            instrument:H.instrument)
+                        if T == nil then
+                            note(name:H.name
+                                octave:H.octave
+                                sharp:H.sharp
+                                duration:Duration
+                                instrument:H.instrument)
+                        else
+                            note(name:H.name
+                                octave:H.octave
+                                sharp:H.sharp
+                                duration:Duration
+                                instrument:H.instrument)|{Helper Duration T}
+                        end
                     end
                 else
                     "StretchTrans: Error"
@@ -93,7 +101,7 @@ local
             end
         in
             ExtendedPartition = {PartitionToTimedList DurationTuple.1|nil}
-            {Helper DurationTuple.duration ExtendedPartition}
+            {Helper DurationTuple.seconds ExtendedPartition}
         end
     end
     
@@ -129,7 +137,11 @@ local
                 end
             end
         in
-            ExtendedPartition = {PartitionToTimedList ScretchTuple.1|nil}
+            if ScretchTuple.IsList then
+                ExtendedPartition = {PartitionToTimedList ScretchTuple.1}
+            else
+                ExtendedPartition = {PartitionToTimedList ScretchTuple.1|nil}
+            end
             {Helper ScretchTuple ExtendedPartition}
         end
     end
@@ -137,11 +149,14 @@ local
     fun {DroneTrans DroneTuple}
         local ExtendedPartition
             fun {Helper Partition Amount Acc}
-                if Amount == Acc then
-                    Partition|nil 
-                else
-                    Partition|{Helper Partition Amount (Acc+1)}
-                end                
+                case Partition
+                of H|T then  
+                    if Amount == Acc then
+                        H|nil 
+                    else
+                        H|{Helper Partition Amount (Acc+1)}
+                    end
+                end               
             end
         in
             ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
@@ -167,9 +182,9 @@ local
                 H|{PartitionToTimedList T}
             [] stretch(factor:F 1:P) then
                 {StretchTrans H}|{PartitionToTimedList T}
-            [] duration(1:P duration:D) then
+            [] duration(1:P seconds:D) then
                 {DurationTrans H}|{PartitionToTimedList T}
-            [] drone(note:_ amount:_) then
+            [] drone(note:N amount:A) then
                 {DroneTrans H}|{PartitionToTimedList T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
@@ -179,7 +194,7 @@ local
         end
     end
 
-  
+    DurationTuple
 
 in
     % Note = {NoteToExtended c}
@@ -194,19 +209,20 @@ in
 
     {Browse 0}
     ListOfNotes = c4|b#6|nil
-    {Browse ListOfNotes}
+    % {Browse ListOfNotes}
     List = {ChordToExtended ListOfNotes}
-    {Browse List}
+    % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|nil
    
-    {Browse {PartitionToTimedList PartitionChord}}
+    % {Browse {PartitionToTimedList PartitionChord}}
 
-    Tuple = stretch(factor:4.0 1:ListOfNotes)
-    {Browse Tuple}
+    Tuple = stretch(factor:4.0 1:PartitionChord)
+    DurationTuple = duration(1:ListOfNotes seconds:6.0)
+    % {Browse {PartitionToTimedList Tuple.1}}
 
-    % {Browse {PartitionToTimedList Tuple.1|nil}}
-    {Browse {StretchTrans Tuple}}
-    {Browse {PartitionToTimedList Tuple|drone(note:a amount:4)|nil}}
+    % {Browse {PartitionToTimedList Tuple|nil}}
+    % {Browse {StretchTrans Tuple}}
+    % {Browse {PartitionToTimedList DurationTuple|nil}}
 end
 
 
