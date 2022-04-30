@@ -138,28 +138,59 @@ local
     %     end
     % end
 
-    % fun {Transpose Semitones Amount} 
-    %     local Index SharpTones OrderOfTones
-    %         fun {HelperFind Semitones OrderOfTones Acc}
-    %             case OrderOfTones
-    %             of H|T then
-    %                 if Semitones == H then Acc
-    %                 elseif {Member H SharpTones} then
-    %                     {HelperFind Semitones T (Acc+2)}
-    %                 else
-    %                     {HelperFind Semitones T (Acc+1)}
-    %                 end
-    %             else
-    %                 ~6
-    %             end
-    %         end
-    %     in 
-    %         OrderOfTones = c|d|e|f|g|a|b|nil 
-    %         SharpTones = c|d|f|g|a|b|nil
-    %         Index = {HelperFind Semitones OrderOfTones 0}
-    %         Index
-    %     end
-    % end
+    fun {Transpose NoteTuple Amount} 
+        local Index SharpTones OrderOfTones
+            fun {HelperFind Note OrderOfTones Acc}
+                case OrderOfTones
+                of H|T then
+                    if Note == H then Acc
+                    elseif {Member H SharpTones} then
+                        {HelperFind Note T (Acc+2)}
+                    else
+                        {HelperFind Note T (Acc+1)}
+                    end
+                else
+                    ~6
+                end
+            end
+            fun {HelperTranspose Index NoteTuple Amount Acc}
+                if Acc == Amount then NoteTuple
+                elseif {Member NoteTuple.name SharpTones} then
+                    if NoteTuple.sharp then
+                        {HelperTranspose Index+1 note(name:NoteTuple.name
+                                                octave:NoteTuple.octave
+                                                sharp:false
+                                                duration:NoteTuple.duration
+                                                instrument:NoteTuple.instrument) Amount (Acc+1)}
+                    else
+                        {HelperTranspose Index+1 note(name:{Nth OrderOfTones Index+1}
+                                                octave:NoteTuple.octave
+                                                sharp:true
+                                                duration:NoteTuple.duration
+                                                instrument:NoteTuple.instrument) Amount (Acc+1)}
+                    end
+                else
+                    if NoteTuple.name == b then
+                        {HelperTranspose 0 note(name:c
+                                                octave:NoteTuple.octave
+                                                sharp:false
+                                                duration:NoteTuple.duration
+                                                instrument:NoteTuple.instrument) Amount (Acc+1)}
+                    else
+                        {HelperTranspose Index+1 note(name:{Nth OrderOfTones Index+1}
+                                                octave:NoteTuple.octave
+                                                sharp:false
+                                                duration:NoteTuple.duration
+                                                instrument:NoteTuple.instrument) Amount (Acc+1)}
+                    end
+                end
+            end
+        in 
+            OrderOfTones = c|d|e|f|g|a|b|nil 
+            SharpTones = c|d|f|g|a|b|nil
+            {HelperTranspose {HelperFind Note.name OrderOfTones 0} NoteTuple Amount 0}
+        end
+    end
 
     % fun {TransposeTrans TransposeTuple}
     %     local ExtendedPartition
@@ -197,7 +228,7 @@ local
             nil
         [] H|T then
             case H 
-            of ChordH|ChordT then
+            of _|_ then
                 {PartitionToTimedList H}|{PartitionToTimedList T}
             [] note(duration:D instrument:I name:N octave:O sharp:S) then
                 H|{PartitionToTimedList T}
@@ -234,9 +265,12 @@ in
     % {Browse ListOfNotes}
     List = {ChordToExtended ListOfNotes}
     % {Browse List}
-    PartitionChord = c4|b#4|ListOfNotes|nil
+    PartitionChord = c4|b#4|ListOfNotes|a|nil
+
+    % {Browse {Nth PartitionChord 3}}
+    {Browse {Transpose {NoteToExtended a4} 4}}
    
-    %{Browse {PartitionToTimedList PartitionChord}}
+    % {Browse {PartitionToTimedList PartitionChord}}
     % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
 
     
