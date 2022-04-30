@@ -68,23 +68,11 @@ local
                 [] H|T then 
                     case H
                     of HPart|TPart then
-                        local 
-                            fun {ChordHelper Duration Chord}
-                                case Chord
-                                of nil then nil
-                                [] H|T then
-                                    note(name:H.name
-                                        octave:H.octave
-                                        sharp:H.sharp
-                                        duration:Duration.seconds
-                                        instrument:H.instrument)|{ChordHelper Duration T}
-                                else
-                                    "DurationTrans: Error"
-                                end
-                            end
-                        in
-                            {ChordHelper Duration H}|{Helper Duration T}
-                        end
+                        note(name:HPart.name
+                            octave:HPart.octave
+                            sharp:HPart.sharp
+                            duration:Duration.seconds
+                            instrument:HPart.instrument)|{Helper Duration TPart}
                     else
                         if T == nil then
                             note(name:H.name
@@ -122,23 +110,11 @@ local
                 [] H|T then 
                     case H
                     of HPart|TPart then
-                        local 
-                            fun {ChordHelper Stretch Chord}
-                                case Chord
-                                of nil then nil
-                                [] H|T then
-                                    note(name:H.name
-                                        octave:H.octave
-                                        sharp:H.sharp
-                                        duration:H.duration * Stretch.factor
-                                        instrument:H.instrument)|{ChordHelper Stretch T}
-                                else
-                                    "StretchTrans: Error"
-                                end
-                            end
-                        in
-                            {ChordHelper Stretch H}|{Helper Stretch T}
-                        end
+                        note(name:H.name
+                            octave:H.octave
+                            sharp:H.sharp
+                            duration:H.duration*Stretch
+                            instrument:H.instrument)|{Helper Stretch TPart}
                     else
                         if T == nil then
                             note(name:H.name
@@ -159,10 +135,11 @@ local
                 end
             end
         in
-            if {IsList StretchTuple.1} then
+            ExtendedPartition = {PartitionToTimedList StretchTuple.1|nil}
+            if {IsList ExtendedPartition.1} then
                 ExtendedPartition = {PartitionToTimedList StretchTuple.1}
             else
-                ExtendedPartition = {PartitionToTimedList StretchTuple.1|nil}
+                ExtendedPartition = ExtendedPartition
             end
             {Helper StretchTuple ExtendedPartition}
         end
@@ -234,16 +211,16 @@ in
     % {Browse ListOfNotes}
     List = {ChordToExtended ListOfNotes}
     % {Browse List}
-    PartitionChord = c4|b#4|ListOfNotes|nil
+    PartitionChord = c4|b#4|ListOfNotes|a|nil
    
-    % {Browse {PartitionToTimedList PartitionChord}}
+    {Browse {PartitionToTimedList PartitionChord}}
 
     
     DurationTuple = duration(1:PartitionChord seconds:6.0)
-    Tuple = stretch(factor:4.0 1:DurationTuple)
+    Tuple = stretch(factor:1.0 1:DurationTuple)
     % {Browse {PartitionToTimedList Tuple.1}}
 
-    {Browse {Flatten {PartitionToTimedList Tuple.1|nil}}}
+    {Browse {PartitionToTimedList Tuple.1|nil}}
     % {Browse {StretchTrans Tuple}}
     % {Browse {PartitionToTimedList DurationTuple|nil}}
 end
