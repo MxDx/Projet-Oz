@@ -68,19 +68,11 @@ local
                 case Partition
                 of nil then nil
                 [] H|T then 
-                    if T == nil then
-                        note(name:H.name
-                            octave:H.octave
-                            sharp:H.sharp
-                            duration:Duration.seconds
-                            instrument:H.instrument)
-                    else
                         note(name:H.name
                             octave:H.octave
                             sharp:H.sharp
                             duration:Duration.seconds
                             instrument:H.instrument)|{Helper Duration T}
-                    end
                 else
                     3
                 end
@@ -97,19 +89,11 @@ local
                 case Partition
                 of nil then nil
                 [] H|T then 
-                    if T == nil then
-                        note(name:H.name
-                            octave:H.octave
-                            sharp:H.sharp
-                            duration:H.duration * Stretch.factor
-                            instrument:H.instrument)
-                    else
                         note(name:H.name
                             octave:H.octave
                             sharp:H.sharp
                             duration:H.duration * Stretch.factor
                             instrument:H.instrument)|{Helper Stretch T}
-                    end
                 else
                     4
                 end
@@ -217,7 +201,7 @@ local
                 end
             end
         in 
-            {Helper {Flatten Partition}}
+            {Flatten {Helper {Flatten Partition}}}
         end
     end
 
@@ -242,21 +226,21 @@ in
     % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|a|nil
    
-    % TimedList = {PartitionToTimedList PartitionChord}
+    % {Browse {PartitionToTimedList PartitionChord}}
     % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
 
     
-    DurationTuple = duration(1:TimedList seconds:6.0)
-    DurationTuple2 = duration(1:DurationTuple seconds:2.0)
+    DurationTuple = duration(1:PartitionChord seconds:6.0)
+    PartitionToTest = DurationTuple|nil
+    DurationTuple2 = duration(1:PartitionToTest seconds:2.0)
     Tuple = stretch(factor:1.0 1:DurationTuple)
-    % {Browse {PartitionToTimedList DurationTuple.1|nil}}
-    % {Browse {PartitionToTimedList DurationTuple2.1|nil}}
-
-    % {Browse {PartitionToTimedList DurationTuple2|nil}}
+    % {Browse {Flatten DurationTuple.1|nil}}
+    {Browse {PartitionToTimedList DurationTuple2.1|nil}}
+    {Browse 1}
+    {Browse {PartitionToTimedList DurationTuple2|nil}}
+    {Browse 2}
     % {Browse {StretchTrans Tuple}}
     % {Browse {PartitionToTimedList DurationTuple|nil}}
-
-    {Browse {Transpose b 1}}
 end
 
 
