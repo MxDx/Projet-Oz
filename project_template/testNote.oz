@@ -62,90 +62,90 @@ local
     %     end
     % end
 
-    fun {DurationTrans DurationTuple}
-        local ExtendedPartition 
-            fun {Helper Duration Partition}
-                case Partition
-                of nil then nil
-                [] H|T then 
-                        note(name:H.name
-                            octave:H.octave
-                            sharp:H.sharp
-                            duration:Duration.seconds
-                            instrument:H.instrument)|{Helper Duration T}
-                else
-                    3
-                end
-            end
-        in
-            ExtendedPartition = {PartitionToTimedList DurationTuple.1|nil}
-            {Helper DurationTuple ExtendedPartition}
-        end
-    end
+    % fun {DurationTrans DurationTuple}
+    %     local ExtendedPartition 
+    %         fun {Helper Duration Partition}
+    %             case Partition
+    %             of nil then nil
+    %             [] H|T then 
+    %                     note(name:H.name
+    %                         octave:H.octave
+    %                         sharp:H.sharp
+    %                         duration:Duration.seconds
+    %                         instrument:H.instrument)|{Helper Duration T}
+    %             else
+    %                 3
+    %             end
+    %         end
+    %     in
+    %         ExtendedPartition = {PartitionToTimedList DurationTuple.1|nil}
+    %         {Helper DurationTuple ExtendedPartition}
+    %     end
+    % end
     
-    fun {StretchTrans StretchTuple}
-        local ExtendedPartition 
-            fun {Helper Stretch Partition}
-                case Partition
-                of nil then nil
-                [] H|T then 
-                        note(name:H.name
-                            octave:H.octave
-                            sharp:H.sharp
-                            duration:H.duration * Stretch.factor
-                            instrument:H.instrument)|{Helper Stretch T}
-                else
-                    4
-                end
-            end
-        in
-            ExtendedPartition = {PartitionToTimedList StretchTuple.1|nil}
-            {Helper StretchTuple ExtendedPartition}
-        end
-    end
+    % fun {StretchTrans StretchTuple}
+    %     local ExtendedPartition 
+    %         fun {Helper Stretch Partition}
+    %             case Partition
+    %             of nil then nil
+    %             [] H|T then 
+    %                     note(name:H.name
+    %                         octave:H.octave
+    %                         sharp:H.sharp
+    %                         duration:H.duration * Stretch.factor
+    %                         instrument:H.instrument)|{Helper Stretch T}
+    %             else
+    %                 4
+    %             end
+    %         end
+    %     in
+    %         ExtendedPartition = {PartitionToTimedList StretchTuple.1|nil}
+    %         {Helper StretchTuple ExtendedPartition}
+    %     end
+    % end
 
-    fun {DroneTrans DroneTuple}
-        local ExtendedPartition
-            fun {Helper Partition Amount Acc}
-                case Partition
-                of H|T then  
-                    if Amount == Acc then
-                        H|nil 
-                    else
-                        H|{Helper Partition Amount (Acc+1)}
-                    end
-                else
-                    5
-                end               
-            end
-        in
-            ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
-            {Helper ExtendedPartition DroneTuple.amount 1}
-        end
-    end
+    % fun {DroneTrans DroneTuple}
+    %     local ExtendedPartition
+    %         fun {Helper Partition Amount Acc}
+    %             case Partition
+    %             of H|T then  
+    %                 if Amount == Acc then
+    %                     H|nil 
+    %                 else
+    %                     H|{Helper Partition Amount (Acc+1)}
+    %                 end
+    %             else
+    %                 5
+    %             end               
+    %         end
+    %     in
+    %         ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
+    %         {Helper ExtendedPartition DroneTuple.amount 1}
+    %     end
+    % end
 
-    fun {Transpose Semitones Amount} 
-        local Index SharpTones OrderOfTones
-            fun {HelperFind Semitones OrderOfTones Acc}
-                case OrderOfTones
-                of H|T then
-                    if Semitones == H then Acc
-                    elseif {Member H SharpTones} then
-                        {HelperFind Semitones T (Acc+2)}
-                    else
-                        {HelperFind Semitones T (Acc+1)}
-                    end
-                else
-                    ~6
-                end
-            end
-        in 
-            OrderOfTones = c|d|e|f|g|a|b|nil 
-            SharpTones = c|d|f|g|a|b|nil
-            Index = {HelperFind Semitones OrderOfTones 0}
-            Index
-        end
-    end
+    % fun {Transpose Semitones Amount} 
+    %     local Index SharpTones OrderOfTones
+    %         fun {HelperFind Semitones OrderOfTones Acc}
+    %             case OrderOfTones
+    %             of H|T then
+    %                 if Semitones == H then Acc
+    %                 elseif {Member H SharpTones} then
+    %                     {HelperFind Semitones T (Acc+2)}
+    %                 else
+    %                     {HelperFind Semitones T (Acc+1)}
+    %                 end
+    %             else
+    %                 ~6
+    %             end
+    %         end
+    %     in 
+    %         OrderOfTones = c|d|e|f|g|a|b|nil 
+    %         SharpTones = c|d|f|g|a|b|nil
+    %         Index = {HelperFind Semitones OrderOfTones 0}
+    %         Index
+    %     end
+    % end
 
     % fun {TransposeTrans TransposeTuple}
     %     local ExtendedPartition
@@ -178,30 +178,26 @@ local
 
     % Fonction qui convertis une partition en liste de notes étendues
     fun {PartitionToTimedList Partition}
-        local
-            fun {Helper Partition}
-                case Partition 
-                of nil then
-                nil
-                [] H|T then
-                    case H 
-                    of note(duration:D instrument:I name:N octave:O sharp:S) then
-                        H|{PartitionToTimedList T}
-                    [] stretch(factor:F 1:P) then
-                        {StretchTrans H}|{PartitionToTimedList T}
-                    [] duration(1:P seconds:D) then
-                        {DurationTrans H}|{PartitionToTimedList T}
-                    [] drone(note:N amount:A) then
-                        {DroneTrans H}|{PartitionToTimedList T}
-                    else
-                        {NoteToExtended H}|{PartitionToTimedList T}
-                    end
-                else
-                    1
-                end
+        case Partition 
+        of nil then
+            nil
+        [] H|T then
+            case H 
+            of ChordH|ChordT then
+                {PartitionToTimedList H}|{PartitionToTimedList T}
+            [] note(duration:D instrument:I name:N octave:O sharp:S) then
+                H|{PartitionToTimedList T}
+            % [] stretch(factor:F 1:P) then
+            %     {StretchTrans H}|{PartitionToTimedList T}
+            % [] duration(1:P seconds:D) then
+            %     {DurationTrans H}|{PartitionToTimedList T}
+            % [] drone(note:N amount:A) then
+            %     {DroneTrans H}|{PartitionToTimedList T}
+            else
+                {NoteToExtended H}|{PartitionToTimedList T}
             end
-        in 
-            {Flatten {Helper {Flatten Partition}}}
+        else
+            1
         end
     end
 
@@ -226,19 +222,19 @@ in
     % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|a|nil
    
-    % {Browse {PartitionToTimedList PartitionChord}}
+    {Browse {PartitionToTimedList PartitionChord}}
     % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
 
     
-    DurationTuple = duration(1:PartitionChord seconds:6.0)
-    PartitionToTest = DurationTuple|nil
-    DurationTuple2 = duration(1:PartitionToTest seconds:2.0)
-    Tuple = stretch(factor:1.0 1:DurationTuple)
+    % DurationTuple = duration(1:PartitionChord seconds:6.0)
+    % PartitionToTest = DurationTuple|nil
+    % DurationTuple2 = duration(1:PartitionToTest seconds:2.0)
+    % Tuple = stretch(factor:1.0 1:DurationTuple)
     % {Browse {Flatten DurationTuple.1|nil}}
-    {Browse {PartitionToTimedList DurationTuple2.1|nil}}
-    {Browse 1}
-    {Browse {PartitionToTimedList DurationTuple2|nil}}
-    {Browse 2}
+    % {Browse {PartitionToTimedList DurationTuple2.1|nil}}
+    % {Browse 1}
+    % {Browse {PartitionToTimedList DurationTuple2|a4|nil}}
+    % {Browse 2}
     % {Browse {StretchTrans Tuple}}
     % {Browse {PartitionToTimedList DurationTuple|nil}}
 end
