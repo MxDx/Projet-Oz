@@ -140,6 +140,58 @@ local
         end
     end
 
+    fun {Transpose Semitones Amount} 
+        local Index SharpTones OrderOfTones
+            fun {HelperFind Semitones OrderOfTones Acc}
+                case OrderOfTones
+                of H|T then
+                    if Semitones == H then Acc
+                    elseif {Member H SharpTones} then
+                        {HelperFind Semitones T (Acc+2)}
+                    else
+                        {HelperFind Semitones T (Acc+1)}
+                    end
+                else
+                    ~6
+                end
+            end
+        in 
+            OrderOfTones = c|d|e|f|g|a|b|nil 
+            SharpTones = c|d|f|g|a|b|nil
+            Index = {HelperFind Semitones OrderOfTones 0}
+            Index
+        end
+    end
+
+    % fun {TransposeTrans TransposeTuple}
+    %     local ExtendedPartition
+    %         fun {Helper Partition Down Amount}
+    %             case Partition
+    %             of nil then nil
+    %             [] H|T then  
+    %                 if Down then
+    %                     local
+    %                         fun {HelperDown H Amount Acc}
+    %                             if Amount == Acc then
+    %                                 H
+    %                             else
+    %                                 if 
+    %                             end
+    %             else
+    %                 6
+    %             end               
+    %         end
+    %     in
+    %         ExtendedPartition = {PartitionToTimedList TransposeTuple.1|nil}
+    %         if TransposeTuple.semitones < 0 then
+    %             {Helper ExtendedPartition true ~TransposeTuple.semitones}
+    %         else
+    %             {Helper ExtendedPartition false TransposeTuple.semitones}
+    %         end
+    %         {Helper ExtendedPartition }
+    %     end
+    % end
+
     % Fonction qui convertis une partition en liste de notes étendues
     fun {PartitionToTimedList Partition}
         local
@@ -170,6 +222,7 @@ local
     end
 
     DurationTuple
+    TimedList
 
 in
     % Note = {NoteToExtended c}
@@ -189,19 +242,21 @@ in
     % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|a|nil
    
-    % {Browse {PartitionToTimedList PartitionChord}}
+    % TimedList = {PartitionToTimedList PartitionChord}
     % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
 
     
-    DurationTuple = duration(1:PartitionChord seconds:6.0)
+    DurationTuple = duration(1:TimedList seconds:6.0)
     DurationTuple2 = duration(1:DurationTuple seconds:2.0)
     Tuple = stretch(factor:1.0 1:DurationTuple)
-    % {Browse {Flatten DurationTuple.1|nil}}
-    {Browse {PartitionToTimedList DurationTuple2.1|nil}}
+    % {Browse {PartitionToTimedList DurationTuple.1|nil}}
+    % {Browse {PartitionToTimedList DurationTuple2.1|nil}}
 
-    {Browse {PartitionToTimedList DurationTuple2|nil}}
+    % {Browse {PartitionToTimedList DurationTuple2|nil}}
     % {Browse {StretchTrans Tuple}}
     % {Browse {PartitionToTimedList DurationTuple|nil}}
+
+    {Browse {Transpose b 1}}
 end
 
 
