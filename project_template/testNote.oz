@@ -62,26 +62,40 @@ local
     %     end
     % end
 
-    % fun {DurationTrans DurationTuple}
-    %     local ExtendedPartition 
-    %         fun {Helper Duration Partition}
-    %             case Partition
-    %             of nil then nil
-    %             [] H|T then 
-    %                     note(name:H.name
-    %                         octave:H.octave
-    %                         sharp:H.sharp
-    %                         duration:Duration.seconds
-    %                         instrument:H.instrument)|{Helper Duration T}
-    %             else
-    %                 3
-    %             end
-    %         end
-    %     in
-    %         ExtendedPartition = {PartitionToTimedList DurationTuple.1|nil}
-    %         {Helper DurationTuple ExtendedPartition}
-    %     end
-    % end
+    fun {AddTogether List Tail}
+        case List
+        of nil then
+            {PartitionToTimedList Tail} 
+        [] H|T then 
+            H|{AddTogether T Tail}
+        end
+    end
+
+    fun {DurationTrans DurationTuple}
+        local ExtendedPartition 
+            fun {Helper Partition Duration ChordBool}
+                case Partition
+                of nil then nil
+                [] H|T then
+                    case H 
+                    of _|_ then
+                        {Helper H Duration true}|{Helper T Duration false}
+                    else 
+                        note(name:H.name
+                            octave:H.octave
+                            sharp:H.sharp
+                            duration:Duration.seconds
+                            instrument:H.instrument)|{Helper T Duration ChordBool}
+                    end
+                else
+                    errorDurationTrans
+                end
+            end
+        in
+            ExtendedPartition = {PartitionToTimedList DurationTuple.1}
+            {Helper ExtendedPartition DurationTuple false}
+        end
+    end
     
     % fun {StretchTrans StretchTuple}
     %     local ExtendedPartition 
@@ -189,8 +203,8 @@ local
                 H|{PartitionToTimedList T}
             % [] stretch(factor:F 1:P) then
             %     {StretchTrans H}|{PartitionToTimedList T}
-            % [] duration(1:P seconds:D) then
-            %     {DurationTrans H}|{PartitionToTimedList T}
+            [] duration(1:P seconds:D) then
+                {AddTogether {DurationTrans H} T}
             % [] drone(note:N amount:A) then
             %     {DroneTrans H}|{PartitionToTimedList T}
             else
@@ -216,24 +230,23 @@ in
     % {Browse Chord}
 
     {Browse 0}
-    ListOfNotes = c4|b#6|nil
+    ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     List = {ChordToExtended ListOfNotes}
     % {Browse List}
-    PartitionChord = c4|b#4|ListOfNotes|a|nil
+    PartitionChord = c4|b#4|ListOfNotes|nil
    
-    {Browse {PartitionToTimedList PartitionChord}}
+    %{Browse {PartitionToTimedList PartitionChord}}
     % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
 
     
-    % DurationTuple = duration(1:PartitionChord seconds:6.0)
-    % PartitionToTest = DurationTuple|nil
-    % DurationTuple2 = duration(1:PartitionToTest seconds:2.0)
+    DurationTuple = duration(1:PartitionChord seconds:6.0)
+    PartitionToTest = DurationTuple|nil
+    DurationTuple2 = duration(1:PartitionToTest seconds:2.0)
     % Tuple = stretch(factor:1.0 1:DurationTuple)
-    % {Browse {Flatten DurationTuple.1|nil}}
-    % {Browse {PartitionToTimedList DurationTuple2.1|nil}}
+    {Browse {PartitionToTimedList PartitionToTest}}
     % {Browse 1}
-    % {Browse {PartitionToTimedList DurationTuple2|a4|nil}}
+    {Browse {PartitionToTimedList DurationTuple2|nil}}
     % {Browse 2}
     % {Browse {StretchTrans Tuple}}
     % {Browse {PartitionToTimedList DurationTuple|nil}}
