@@ -123,25 +123,29 @@ local
         end
     end
 
-    % fun {DroneTrans DroneTuple}
-    %     local ExtendedPartition
-    %         fun {Helper Partition Amount Acc}
-    %             case Partition
-    %             of H|T then  
-    %                 if Amount == Acc then
-    %                     H|nil 
-    %                 else
-    %                     H|{Helper Partition Amount (Acc+1)}
-    %                 end
-    %             else
-    %                 5
-    %             end               
-    %         end
-    %     in
-    %         ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
-    %         {Helper ExtendedPartition DroneTuple.amount 1}
-    %     end
-    % end
+    fun {DroneTrans DroneTuple}
+        local ExtendedPartition
+            fun {Helper Partition Amount Acc}
+                case Partition
+                of H|T then  
+                    if Amount == Acc then
+                        H|nil 
+                    else
+                        H|{Helper Partition Amount (Acc+1)}
+                    end
+                else
+                    droneTransError
+                end               
+            end
+        in  
+            if DroneTuple.amount < 1 then
+                droneTransLessThan1Error
+            else
+            ExtendedPartition = {PartitionToTimedList DroneTuple.note|nil}
+            {Helper ExtendedPartition DroneTuple.amount 1}
+            end
+        end
+    end
 
     fun {Transpose NoteTuple Amount} 
         local Index SharpTones OrderOfTones
@@ -241,8 +245,8 @@ local
                 {AddTogether {StretchTrans H} T}
             [] duration(1:P seconds:D) then
                 {AddTogether {DurationTrans H} T}
-            % [] drone(note:N amount:A) then
-            %     {DroneTrans H}|{PartitionToTimedList T}
+            [] drone(note:N amount:A) then
+                {AddTogether {DroneTrans H} T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
@@ -275,9 +279,6 @@ in
     % {Browse {Nth PartitionChord 3}}
     % {Browse {Transpose {NoteToExtended a4} 4}}
    
-    % {Browse {PartitionToTimedList PartitionChord}}
-    % {Browse {PartitionToTimedList {PartitionToTimedList PartitionChord}}}
-
     %% Test Duration
     DurationTuple = duration(1:PartitionChord seconds:6.0)
     PartitionToTest = DurationTuple|nil
@@ -288,9 +289,13 @@ in
     %% Test Stretch
     TupleStretch = stretch(factor:2.0 1:PartitionChord)|nil
     TupleDuration = stretch(factor:1.0 1:PartitionToTest)
-    {Browse TupleStretch}
-    {Browse {PartitionToTimedList TupleStretch}}
-    {Browse {PartitionToTimedList TupleDuration|nil}}
+    %{Browse TupleStretch}
+    %{Browse {PartitionToTimedList TupleStretch}}
+    %{Browse {PartitionToTimedList TupleDuration|nil}}
+
+    %% Test Drone
+    DroneList = drone(note:a6|b#2|nil amount:4)|c5|nil
+    {Browse {PartitionToTimedList DroneList}}
 end
 
 
