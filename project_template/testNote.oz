@@ -318,13 +318,15 @@ local
         end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     fun {MixCalcul Note}
         local NotestoInt H F
             fun {Helper Amount Acc}
                 if Amount == Acc then
                     nil
                 else
-                    0.5 * {Float.sin ((2.0*3.14159265359*{IntToFloat Acc})/44100.0)}|{Helper Amount Acc+1}
+                    (0.5 * {Float.sin ((2.0*3.14159265359*{IntToFloat Acc}*F)/44100.0)})|{Helper Amount Acc+1}
                 end
             end
         in
@@ -335,32 +337,46 @@ local
                 H = 12*(Note.octave - 4) + NotestoInt.(Note.name) - 10
             end
             F = {Pow 2.0 {IntToFloat H}/12.0} * 440.0
-            {Helper {FloatToInt Note.duration*44100.0} 0}
+            {Helper {FloatToInt Note.duration*44100.0} 1}
         end
     end
 
-    % fun {Mix P2T Music}
-    %     local
-    %         fun {Helper Partition}
-    %             case Partition
-    %             of nil then
-    %                 nil
-    %             [] H|T then
-    %                 case H
-    %                 of _|_ then
-    %                     {Helper H}|{Helper T}
-    %                 else
-    %                     {MixTrans H}|{MixTrans T}
-    %                 end
-    %             [] note(duration:_ instrument:_ name:_ octave:_ sharp:_)
-    %             else
-    %                 ~1
-    %             end
-    %         end
-    %     in 
-    %         {Helper {P2T Music.1.1}}
-    %     end
-    % end
+    fun {Mix P2T Music}
+        local
+            fun {Helper Partition}
+                case Partition
+                of nil then
+                    nil
+                [] H|T then
+                    case H
+                    of HChord|TChord then
+                        local ChordAdd
+                            fun {HelperChord Old Current}
+                                case Current
+                                of nil then Old
+                                [] H2|T2 then
+                                    {HelperChord {List.mapInd {MixCalcul H2} fun {$ I E} (E + {Nth Old I}) end} T2}
+                                else
+                                    ~3
+                                end
+                            end
+                        in 
+                            {Map {HelperChord {MixCalcul HChord} TChord} fun {$ E} (E/{IntToFloat {Length H}}) end}
+                        end
+                    [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
+                        {MixCalcul H}|{Helper T}
+                    else
+                        ~2
+                    end
+                else
+                    ~1
+                end
+            end
+        in 
+            % {Flatten {Helper {P2T Music.1.1}}}
+            {Helper {P2T Music.1.1}}
+        end
+    end
 
     DurationTuple
     TimedList
@@ -379,16 +395,30 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
+    {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
     ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
     % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|a|nil
 
+    TestAddList = [1 2 3]
+    TestAddList2 = [1 1 1]
+
+    % {Browse {List.mapInd TestAddList fun {$ I E} (E + {Nth TestAddList2 I}) end}}
+    % Factor = 2.0
+    % {Browse {Map [2.0 2.0 2.0] fun {$ E} (E/Factor) end}}
     % {Browse Music.1.1}
     % {Browse {PartitionToTimedList Music.1.1}}
-    % {Browse {Project.readFile CWD#'/wave/animals/cow.wav'}}
-    {Browse {MixCalcul {NoteToExtended c#5}}}
+    {Browse {Project.readFile CWD#'/wave/animals/cow.wav'}}
+
+    % {Browse {MixCalcul {NoteToExtended a3}}}
+    % {Browse {MixCalcul {NoteToExtended a5}}}
+    % {Browse {Nth {MixCalcul {NoteToExtended a3}} 22499}}
+    % {Browse {Nth {MixCalcul {NoteToExtended a5}} 22499}}
+    % {Browse [{ChordToExtended [a4 b4]}]}
+    % {Browse {Mix PartitionToTimedList [partition([{ChordToExtended [a4 a4]}])]}}
+    % {Browse {Nth {Mix PartitionToTimedList [partition([{ChordToExtended [a4 b4]}])]} 22500}}
 
     % {Browse {PartitionToTimedList PartitionChord}}
 
