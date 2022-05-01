@@ -318,6 +318,50 @@ local
         end
     end
 
+    fun {MixCalcul Note}
+        local NotestoInt H F
+            fun {Helper Amount Acc}
+                if Amount == Acc then
+                    nil
+                else
+                    0.5 * {Float.sin ((2.0*3.14159265359*{IntToFloat Acc})/44100.0)}|{Helper Amount Acc+1}
+                end
+            end
+        in
+            NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12)
+            if Note.sharp then
+                H = 12*(Note.octave - 4) + NotestoInt.(Note.name) + 1 - 10
+            else
+                H = 12*(Note.octave - 4) + NotestoInt.(Note.name) - 10
+            end
+            F = {Pow 2.0 {IntToFloat H}/12.0} * 440.0
+            {Helper {FloatToInt Note.duration*44100.0} 0}
+        end
+    end
+
+    % fun {Mix P2T Music}
+    %     local
+    %         fun {Helper Partition}
+    %             case Partition
+    %             of nil then
+    %                 nil
+    %             [] H|T then
+    %                 case H
+    %                 of _|_ then
+    %                     {Helper H}|{Helper T}
+    %                 else
+    %                     {MixTrans H}|{MixTrans T}
+    %                 end
+    %             [] note(duration:_ instrument:_ name:_ octave:_ sharp:_)
+    %             else
+    %                 ~1
+    %             end
+    %         end
+    %     in 
+    %         {Helper {P2T Music.1.1}}
+    %     end
+    % end
+
     DurationTuple
     TimedList
 
@@ -331,17 +375,25 @@ in
     % {Browse TestChords}
     % Chord = {ChordToExtended TestChords}
     % {Browse Chord}
-
+    CWD = 'project_template/' % Put here the **absolute** path to the project files
+    [Project] = {Link [CWD#'Project2022.ozf']}
+    Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
     ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
-    List = {ChordToExtended ListOfNotes}
+    % List = {ChordToExtended ListOfNotes}
     % {Browse List}
     PartitionChord = c4|b#4|ListOfNotes|a|nil
-    {Browse {PartitionToTimedList PartitionChord}}
+
+    % {Browse Music.1.1}
+    % {Browse {PartitionToTimedList Music.1.1}}
+    % {Browse {Project.readFile CWD#'/wave/animals/cow.wav'}}
+    {Browse {MixCalcul {NoteToExtended c#5}}}
+
+    % {Browse {PartitionToTimedList PartitionChord}}
 
     % {Browse {Nth PartitionChord 3}}
-    {Browse {TransposeTrans tupl(1:a4|nil semitones:4)}}
+    % {Browse {TransposeTrans tupl(1:a4|nil semitones:4)}}
    
     %%%% Test Duration
     %DurationTuple = duration(1:PartitionChord seconds:6.0)
