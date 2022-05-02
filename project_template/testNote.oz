@@ -327,13 +327,14 @@ in
     % {Browse {Mix PartitionToTimedList Music}}
     % {Browse {Project.readFile CWD#'/wave/animals/cow.wav'}}
 
-    % {Browse {MixCalcul {NoteToExtended a3} 1.0}}
+    % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
     % {Browse {MixCalcul {NoteToExtended a5} 1.0}}
-    % {Browse {Nth {MixCalcul {NoteToExtended a3} 1.0} 2}}
+    {Browse {Nth {MixCalcul {NoteToExtended a4} 1.0} 22051}}
+    {Browse {Length {MixCalcul {NoteToExtended a4} 1.0}}}
     % {Browse {Nth {MixCalcul {NoteToExtended a5} 1.0} 2}}
     % {Browse [{ChordToExtended [a4 b4]}]}
     % {Browse {Mix PartitionToTimedList [partition([{ChordToExtended [a4 a4]}])]}}
-    {Browse {Nth {Mix PartitionToTimedList [partition([a4])]} 22050}}
+    % {Browse {Nth {Mix PartitionToTimedList [partition([a4])]} 22050}}
 
     % {Browse {PartitionToTimedList PartitionChord}}
 
