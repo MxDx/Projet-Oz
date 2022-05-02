@@ -336,9 +336,34 @@ local
     %     end
     % end
 
-    
+    fun {Fade Start Out Samples}
+        local LengthS Step TimeStart TimeOut StartStep OutStep
+            fun {Helper Sample Acc AccStart AccOut}
+                {Show 1}
+                if Sample == nil then nil 
+                elseif Acc =< TimeStart then
+                    % {Show Acc}
+                    Sample.1*AccStart|{Helper Sample.2 Acc+1.0 AccStart+StartStep AccOut}
+                elseif Acc > TimeOut then
+                    {Show Acc}
+                    Sample.1*AccOut|{Helper Sample.2 Acc+1.0 AccStart AccOut-OutStep}
+                else
+                    Sample.1|{Helper Sample.2 Acc+Step AccStart AccOut}
+                end
+            end
+        in
+            LengthS = {IntToFloat {Length Samples}}/44100.0
+            Step = 1.0/44100.0
+            TimeStart = {IntToFloat Start}*44100.0
+            TimeOut = (LengthS-{IntToFloat Out})*44100.0
+            StartStep = {IntToFloat Start}/44100.0
+            OutStep = {IntToFloat Out}/44100.0
+            {Show LengthS}
+            {Helper Samples 0.0 0.0 1.0}
+        end
+    end
 
-    fun {Cut Start Finish Sample}
+    fun {Cut Start Finish Samples}
         local LengthS
             fun {Helper Sample Acc} 
                 if Acc >= Finish then
@@ -352,8 +377,8 @@ local
                 end
             end
         in
-            LengthS = {IntToFloat {Length Sample}}/44100.0
-            {Flatten {Helper Sample 0.0}}
+            LengthS = {IntToFloat {Length Samples}}/44100.0
+            {Flatten {Helper Samples 0.0}}
         end
     end
 
@@ -413,6 +438,8 @@ local
                         {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     % [] echo(delay:D 1:M) then
                     %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
+                    [] fade(start:S out:F 1:M) then
+                        {Fade S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     [] cut(start:S finish:F 1:M) then
                         {Cut S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     else
@@ -447,16 +474,20 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
+    % Samples = {Project.readFile CWD#'/wave/animals/cat.wav'}
+    % {Browse {IntToFloat {Length Samples}}/44100.0}
+    % {Browse {Mix PartitionToTimedList [fade(1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] start:1 out:1)]}}
+    {Browse {Project.run Mix PartitionToTimedList [fade(1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] start:1 out:1)] 'out2.wav'}}
     % {Browse {Cut 0.5 1.0 {Project.readFile CWD#'/wave/animals/cat.wav'}}}
     % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
     % {Browse Music.1.1}
-    % {Browse {Merge PartitionToTimedList [0.5#Music]}}
+    % {Browse {Merge PartitionToTimedList [0.5#[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] 0.5#[samples({Project.readFile CWD#'/wave/animals/cat.wav'})]]}}
     % {Browse {Mix PartitionToTimedList [merge([0.5#Music])]}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    {Browse {Project.run Mix PartitionToTimedList [cut(start:0.5 finish:1.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:1 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [cut(start:0.5 finish:1.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % High = note(name:a
                 % octave:5
                 % sharp:false
