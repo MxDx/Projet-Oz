@@ -396,12 +396,11 @@ local
     % Fonction qui rajoute un echo a une musique
 
     fun {Echo Music Delay Decay P2T}
-        local LengthM
+        local
             OriginalMusic = Music
             DelayedMusic = partition(silence(duration:Delay)|nil)|Music
         in
-            LengthM = {IntToFloat {Length OriginalMusic}}*44100.0
-            {List.take {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil} LengthM}
+            {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil}
         end
     end
 
@@ -535,6 +534,33 @@ local
    % Uncomment next line to insert your tests.
    % \insert '/full/absolute/path/to/your/tests.oz'
    % !!! Remove this before submitting.
+
+   PassedTests = {Cell.new 0}
+   TotalTests  = {Cell.new 0}
+
+   fun {Normalize2 Samples}
+    {Map Samples fun {$ S} {IntToFloat {FloatToInt S*10000.0}} end}
+    end
+
+    proc {Assert Cond Msg}
+       TotalTests := @TotalTests + 1
+       if {Not Cond} then
+          {System.show Msg}
+       else
+          PassedTests := @PassedTests + 1
+       end
+    end
+
+    proc {AssertEquals A E Msg}
+       TotalTests := @TotalTests + 1
+       if A \= E then
+          {System.show Msg}
+          {System.show actual(A)}
+          {System.show expect(E)}
+       else
+          PassedTests := @PassedTests + 1
+       end
+    end
 in
    Start = {Time}
 
@@ -544,11 +570,26 @@ in
    % Add variables to this list to avoid "local variable used only once"
    % warnings.
    {ForAll [NoteToExtended Music] Wait}
+
+%    {System.show '                    TEST Mix TestEcho'}
+
+%    local Music SamplesExpected in
+
+%       Music = [echo(delay:5.0/44100.0 decay:0.3 1:[partition([note(name:a octave:4 sharp:true duration:5.0/44100.0 instrument:none)])])]
+
+%       SamplesExpected = [0.0 0.0331841 0.0662219 0.0989677 0.131277 0.00.3 0.03318410.3 0.06622190.3 0.09896770.3 0.131277*0.3]
+
+%       % [0.0 0.0331841 0.0662219 0.0989677 0.131277]
+
+%       {AssertEquals {Normalize2 {Mix PartitionToTimedList Music}} {Normalize2 SamplesExpected} 'Test not passed - TestEcho 1'}
+
+%    end
+    {Browse {PartitionToTimedList [nil]}}
    
    % Calls your code, prints the result and outputs the result to `out.wav`.
    % You don't need to modify this.
    % {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
-   {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
+%    {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
    
    % Shows the total time to run your code.
    {Browse {IntToFloat {Time}-Start} / 1000.0}
