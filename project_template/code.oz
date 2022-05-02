@@ -45,22 +45,32 @@ local
 
    % function that processes a Duration Record into a timed list
    fun {DurationTrans DurationTuple}
-      local ExtendedPartition 
-          fun {Helper Partition Duration}
-              case Partition
-              of nil then nil
-              [] H|T then
-                  case H 
-                  of _|_ then
-                      {Helper H Duration}|{Helper T Duration}
-                  [] silence(duration:_) then
-                      silence(duration:Duration.seconds)|{Helper T Duration}
+      local 
+        ExtendedPartition
+        TrueDuration 
+        fun {Helper Partition Duration}
+            case Partition
+            of nil then nil
+            [] H|T then
+                case H 
+                of _|_ then
+                    {Helper H Duration}|{Helper T Duration}
+                [] silence(duration:_) then
+                    silence(duration:Duration)|{Helper T Duration}
+                else 
                   else 
-                      note(name:H.name
-                          octave:H.octave
-                          sharp:H.sharp
-                          duration:Duration.seconds
-                          instrument:H.instrument)|{Helper T Duration}
+                else 
+                  else 
+                else 
+                  else 
+                else 
+                  else 
+                else 
+                    note(name:H.name
+                        octave:H.octave
+                        sharp:H.sharp
+                        duration:Duration
+                        instrument:H.instrument)|{Helper T Duration}
                   end
               else
                   errorDurationTrans
@@ -68,7 +78,8 @@ local
           end
       in
           ExtendedPartition = {PartitionToTimedList DurationTuple.1}
-          {Helper ExtendedPartition DurationTuple}
+          TrueDuration = DurationTuple.seconds/{Int.toFloat {Length ExtendedPartition}}
+          {Helper ExtendedPartition TrueDuration}
       end
   end
 
@@ -303,8 +314,6 @@ local
             end
         in  
             {Helper MergeList.2 {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}}
-            % MergeList.2
-            % {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}
         end
     end
 
@@ -441,7 +450,6 @@ local
                                 end
                             end
                         in 
-                            % {Map {HelperChord {MixCalcul HChord} TChord} fun {$ E} (E/{IntToFloat {Length H}}) end}
                             {HelperChord {MixCalcul HChord {IntToFloat {Length H}}} TChord {IntToFloat {Length H}}}
                         end
                     [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
@@ -492,7 +500,6 @@ local
             end
         in
             {Flatten {HelperMusic P2T Music}}
-            % {Helper {P2T Music.1.1}}
         end
     end
 
