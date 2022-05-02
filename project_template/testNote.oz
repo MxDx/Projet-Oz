@@ -33,34 +33,7 @@ local
         end
     end
 
-    % fun {DurationTrans DurationTuple}
-    %     ExtendedPartition = {PartitionToTimedList Duration.1}
-    %     local fun {Helper Duration Partition}
-    %         case Partition
-    %         of H|T then
-    %             case H
-    %             of HPart|TPart then
-    %                 if TPart == nil then
-    %                     note(name:HPart.name
-    %                         octave:HPart.octave
-    %                         sharp:HPart.sharp
-    %                         duration:Duration
-    %                         instrument:HPart.instrument)
-    %                 else
-    %                     note(name:HPart.name
-    %                         octave:HPart.octave
-    %                         sharp:HPart.sharp
-    %                         duration:HPart.Duration
-    %                         instrument:HPart.instrument)|{Helper Duration TPart}
-    %                 end
-    %             else
-    %                 "DurationTrans: Error"
-    %             end
-    %         end
-    %     in
-    %         {Helper DurationTuple.seconds ExtendedPartition}
-    %     end
-    % end
+
 
     fun {AddTogether List Tail}
         case List
@@ -147,59 +120,7 @@ local
         end
     end
 
-    % fun {Transpose NoteTuple Amount} 
-    %     local Index SharpTones OrderOfTones
-    %         fun {HelperFind Note OrderOfTones Acc}
-    %             case OrderOfTones
-    %             of H|T then
-    %                 if Note == H then Acc
-    %                 elseif {Member H SharpTones} then
-    %                     {HelperFind Note T (Acc+2)}
-    %                 else
-    %                     {HelperFind Note T (Acc+1)}
-    %                 end
-    %             else
-    %                 ~6
-    %             end
-    %         end
-    %         fun {HelperTranspose Index NoteTuple Amount Acc}
-    %             if Acc == Amount then NoteTuple
-    %             elseif {Member NoteTuple.name SharpTones} then
-    %                 if NoteTuple.sharp then
-    %                     {HelperTranspose Index+1 note(name:NoteTuple.name
-    %                                             octave:NoteTuple.octave
-    %                                             sharp:false
-    %                                             duration:NoteTuple.duration
-    %                                             instrument:NoteTuple.instrument) Amount (Acc+1)}
-    %                 else
-    %                     {HelperTranspose Index+1 note(name:{Nth OrderOfTones Index+1}
-    %                                             octave:NoteTuple.octave
-    %                                             sharp:true
-    %                                             duration:NoteTuple.duration
-    %                                             instrument:NoteTuple.instrument) Amount (Acc+1)}
-    %                 end
-    %             else
-    %                 if NoteTuple.name == b then
-    %                     {HelperTranspose 0 note(name:c
-    %                                             octave:NoteTuple.octave
-    %                                             sharp:false
-    %                                             duration:NoteTuple.duration
-    %                                             instrument:NoteTuple.instrument) Amount (Acc+1)}
-    %                 else
-    %                     {HelperTranspose Index+1 note(name:{Nth OrderOfTones Index+1}
-    %                                             octave:NoteTuple.octave
-    %                                             sharp:false
-    %                                             duration:NoteTuple.duration
-    %                                             instrument:NoteTuple.instrument) Amount (Acc+1)}
-    %                 end
-    %             end
-    %         end
-    %     in 
-    %         OrderOfTones = c|d|e|f|g|a|b|nil 
-    %         SharpTones = c|d|f|g|a|b|nil
-    %         {HelperTranspose {HelperFind Note.name OrderOfTones 0} NoteTuple Amount 0}
-    %     end
-    % end
+ 
     fun {ComputeOctave TransValue Octave IntNoteName}
         local
             fun {Helper TransValue Octave}
@@ -251,7 +172,7 @@ local
                             instrument:H.instrument 
                             name:((InttoNote.NewName).1) 
                             octave:Octave 
-                            sharp:((InttoNote.NewName).2))
+                            sharp:((InttoNote.NewName).2))|{Helper Semitone T}
                     end
                 else
                     transposeTransError
@@ -259,39 +180,10 @@ local
             end
         in
             ExtendedPartition = {PartitionToTimedList TransposeTuple.1}
-            {Browse ExtendedPartition}
             {Helper TransposeTuple.semitones ExtendedPartition}
         end
     end
 
-    % fun {TransposeTrans TransposeTuple}
-    %     local ExtendedPartition
-    %         fun {Helper Partition Down Amount}
-    %             case Partition
-    %             of nil then nil
-    %             [] H|T then  
-    %                 if Down then
-    %                     local
-    %                         fun {HelperDown H Amount Acc}
-    %                             if Amount == Acc then
-    %                                 H
-    %                             else
-    %                                 if 
-    %                             end
-    %             else
-    %                 6
-    %             end               
-    %         end
-    %     in
-    %         ExtendedPartition = {PartitionToTimedList TransposeTuple.1|nil}
-    %         if TransposeTuple.semitones < 0 then
-    %             {Helper ExtendedPartition true ~TransposeTuple.semitones}
-    %         else
-    %             {Helper ExtendedPartition false TransposeTuple.semitones}
-    %         end
-    %         {Helper ExtendedPartition }
-    %     end
-    % end
 
     % Fonction qui convertis une partition en liste de notes étendues
     fun {PartitionToTimedList Partition}
@@ -310,6 +202,8 @@ local
                 {AddTogether {DurationTrans H} T}
             [] drone(note:N amount:A) then
                 {AddTogether {DroneTrans H} T}
+            [] transpose(semitones:S 1:P) then
+                {AddTogether {TransposeTrans H} T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
