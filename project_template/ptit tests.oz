@@ -53,6 +53,8 @@ local
                     case H 
                     of _|_ then
                         {Helper H Duration}|{Helper T Duration}
+                    [] silence(duration:_) then
+                        silence(duration:Duration.seconds)|{Helper T Duration}
                     else 
                         note(name:H.name
                             octave:H.octave
@@ -79,6 +81,8 @@ local
                     case H
                     of _|_ then
                         {Helper Stretch H}|{Helper Stretch T}
+                    [] silence(duration:D) then
+                        silence(duration:(D*Stretch.factor))|{Helper Stretch T}
                     else
                         note(name:H.name
                             octave:H.octave
@@ -138,46 +142,43 @@ local
         end
     end
 
-    NoteValue
     InttoNote
     NotestoInt
     fun {TransposeTrans TransposeTuple}
-        %Notes = c|c#|d|d#|e|f|f#|g|g#|a|a#|b
-        %Correspond aux nombres 1|2|3|4|5|...|12
-        NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12)
+        NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12) %We add one in the code if note is sharp
         InttoNote = itn(1:c#false 2:c#true 3:d#false 4:d#true 5:e#false 6:f#false 7:f#true 8:g#false 9:g#true 10:a#false 11:a#true 12:b#false)
         local
             ExtendedPartition
-            TransposedNote
-            Octave
-            NewName
             fun {Helper Semitone Partition}
-                NoteValue = 0
                 case Partition
                 of nil then 
                     nil
                 [] H|T then
-                    {Browse 2}
                     case H
                     of _|_ then
                         {Helper Semitone H}|{Helper Semitone T}
+                    [] silence(duration:_) then
+                        H|{Helper Semitone T}
                     else
-                        {Browse 3}
-                        {Browse H.name}
-                        {Browse H.sharp}
-                        if H.sharp then
-                            NoteValue = NotestoInt.(H.name) + 1
-                        else
-                            NoteValue = NotestoInt.(H.name)
+                        local
+                            NoteValue
+                            TransposedNote
+                            Octave
+                            NewName
+                        in
+                            if H.sharp then
+                                NoteValue = NotestoInt.(H.name) + 1
+                            else
+                                NoteValue = NotestoInt.(H.name)
+                            end
+                            TransposedNote = NoteValue + Semitone
+                            Octave = {ComputeOctave TransposedNote H.octave NewName}
+                            note(duration:H.duration 
+                                instrument:H.instrument 
+                                name:((InttoNote.NewName).1) 
+                                octave:Octave 
+                                sharp:((InttoNote.NewName).2))|{Helper Semitone T}
                         end
-                        {Browse 4}
-                        TransposedNote = NoteValue + Semitone
-                        Octave = {ComputeOctave TransposedNote H.octave NewName}
-                        note(duration:H.duration 
-                            instrument:H.instrument 
-                            name:((InttoNote.NewName).1) 
-                            octave:Octave 
-                            sharp:((InttoNote.NewName).2))|{Helper Semitone T}
                     end
                 else
                     transposeTransError
@@ -210,6 +211,10 @@ local
                 {AddTogether {DroneTrans H} T}
             [] transpose(semitones:S 1:P) then
                 {AddTogether {TransposeTrans H} T}
+            [] silence(duration:_) then
+                H|{PartitionToTimedList T}
+            [] silence then
+                silence(duration:1.0)|{PartitionToTimedList T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
@@ -231,7 +236,7 @@ in
     % Chord = {ChordToExtended TestChords}
     % {Browse Chord}
 
-    ListOfNotes = (c4|d6|nil)
+    ListOfNotes = (c4|d6|silence|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
     % {Browse List}
@@ -242,7 +247,7 @@ in
 
     % {Browse {Nth PartitionChord 3}}
     {Browse 1}
-    {Browse {TransposeTrans tupl(semitones:4 1:PartitionChord)}}
+    % {Browse {TransposeTrans tupl(semitones:4 1:PartitionChord)}}
    
     %%%% Test Duration
     %DurationTuple = duration(1:PartitionChord seconds:6.0)
@@ -252,10 +257,10 @@ in
     %{Browse {PartitionToTimedList DurationTuple2|nil}}
 
     %%%% Test Stretch
-    %TupleStretch = stretch(factor:2.0 1:PartitionChord)|nil
+    TupleStretch = stretch(factor:2.0 1:PartitionChord)|nil
     %TupleDuration = stretch(factor:1.0 1:PartitionToTest)
     %{Browse TupleStretch}
-    %{Browse {PartitionToTimedList TupleStretch}}
+    {Browse {PartitionToTimedList TupleStretch}}
     %{Browse {PartitionToTimedList TupleDuration|nil}}
 
     %%%% Test Drone
