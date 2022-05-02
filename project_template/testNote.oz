@@ -1,6 +1,6 @@
 declare
 fun {NoteToExtended Note}
-    fun {NoteToExtended Note}
+fun {NoteToExtended Note}
         case Note
         of Name#Octave then
            note(name:Name octave:Octave sharp:true duration:1.0 instrument:none)
@@ -263,7 +263,7 @@ fun {NoteToExtended Note}
     fun {Loop M S}
         local
             fun {Helper M S Length}
-                if ((S-Length) < 0.0) then
+                if (S-Length) < 0.0 then
                     local
                         fun {HelperLast M S Acc}
                             if S == 0.0 then
@@ -352,7 +352,9 @@ fun {NoteToExtended Note}
 
     DurationTuple
     TimedList
-
+    CWD
+    Project
+    Music
 in
     % Note = {NoteToExtended c}
     % {Browse Note}
@@ -365,20 +367,20 @@ in
     % {Browse Chord}
     CWD = 'project_template/' % Put here the **absolute** path to the project files
     [Project] = {Link [CWD#'Project2022.ozf']}
-    Music = {Project.load CWD#'joy.dj.oz'}
+    % Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    ListOfNotes = (c4|b#6|nil)
+    % ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
     % {Browse List}
-    PartitionChord = c4|b#4|ListOfNotes|a|nil
+    % PartitionChord = c4|b#4|ListOfNotes|a|nil
 
-    TestAddList = [1 2 3]
-    TestAddList2 = [1 1 1]
+    % TestAddList = [1 2 3]
+    % TestAddList2 = [1 1 1]
 
     % {Browse {List.mapInd TestAddList fun {$ I E} (E + {Nth TestAddList2 I}) end}}
     % Factor = 2.0
@@ -387,7 +389,7 @@ in
     % {Browse {PartitionToTimedList Music.1.1}}
     % {Browse {Mix PartitionToTimedList Music}}
     % {Browse {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}
-    {Browse {Loop {Project.readFile CWD#'/wave/animals/cat.wav'} 4.445895691609977} }
+    % {Browse 1}
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
     % {Browse {MixCalcul {NoteToExtended a5} 1.0}}
