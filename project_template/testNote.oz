@@ -1,6 +1,6 @@
 declare
-fun {NoteToExtended Note}
-fun {NoteToExtended Note}
+local
+    fun {NoteToExtended Note}
         case Note
         of Name#Octave then
            note(name:Name octave:Octave sharp:true duration:1.0 instrument:none)
@@ -388,7 +388,7 @@ in
     % {Browse Music.1.1}
     % {Browse {PartitionToTimedList Music.1.1}}
     % {Browse {Mix PartitionToTimedList Music}}
-    % {Browse {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}
+    {Browse {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}
     % {Browse 1}
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
