@@ -211,7 +211,6 @@ local
            end
        in
            ExtendedPartition = {PartitionToTimedList TransposeTuple.1}
-           {Browse ExtendedPartition}
            {Helper TransposeTuple.semitones ExtendedPartition}
        end
    end
@@ -251,6 +250,8 @@ local
   end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+   % Fonction qui renvoie la liste des impulsions sinusoidales d'une note
 
    fun {MixCalcul Note Div}
     local NotestoInt H F
@@ -273,6 +274,10 @@ local
     end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+   % Fonction qui rajoute des 0 dans une liste pour l'étendre
+
     fun {AddZeros NbZeros List}
         case List
         of nil then
@@ -285,6 +290,10 @@ local
             H|{AddZeros NbZeros T}
         end
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui assemble différente musique selon un certain ratio d'intensité 
 
     fun {Merge P2T MergeList}
         local
@@ -318,6 +327,10 @@ local
         end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui répète une partition un certain nombre de fois
+
     fun {MixRepeat Music Amount}
         local
             fun {Helper Music Amount}
@@ -331,6 +344,10 @@ local
             {Flatten {Helper Music Amount}}
         end
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui alonge une musique pour qu'elle soit de la même longueur que S
 
     fun {Loop M S}
         local
@@ -358,6 +375,10 @@ local
         end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui limite une musique à des certains maximum et minimum 
+
     fun {Clip Low High M}
         local
             fun {Helper I E} 
@@ -370,14 +391,23 @@ local
         end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui rajoute un echo a une musique
+
     fun {Echo Music Delay Decay P2T}
-        local
+        local LengthM
             OriginalMusic = Music
             DelayedMusic = partition(silence(duration:Delay)|nil)|Music
         in
-            {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil}
+            LengthM = {IntToFloat {Length OriginalMusic}}*44100.0
+            {List.take {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil} LengthM}
         end
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui fade la musique au début et à la fin (en fonction de Start et Out)
 
     fun {Fade Start Out Samples}
         local LengthS Step TimeStart TimeOut StartStep OutStep
@@ -403,9 +433,17 @@ local
         end
     end
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui coupe la musique entre Start et Finish (en secondes)
+
     fun {Cut Start Finish Samples}
         {List.drop {List.take Samples {FloatToInt Finish*44100.0}} {FloatToInt Start*44100.0}}
     end
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+    % Fonction qui Mix les musiques pour donnée une liste des réponse du con
 
     fun {Mix P2T Music}
         local
@@ -491,7 +529,7 @@ local
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   Music = {Project.load CWD#'joy.dj.oz'}
+   Music = {Project.load CWD#'example.dj.oz'}
    Start
 
    % Uncomment next line to insert your tests.
@@ -509,6 +547,7 @@ in
    
    % Calls your code, prints the result and outputs the result to `out.wav`.
    % You don't need to modify this.
+   % {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
    {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
    
    % Shows the total time to run your code.
