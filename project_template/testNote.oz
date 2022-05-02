@@ -246,6 +246,19 @@ local
         end
     end
 
+    fun {AddZeros NbZeros List}
+        case List
+        of nil then
+            if NbZeros > 0 then
+                0.0|{AddZeros NbZeros-1 nil}
+            else
+                nil
+            end
+        [] H|T then
+            H|{AddZeros NbZeros T}
+        end
+    end
+
     fun {Merge P2T MergeList}
         local
             fun {Helper MergeList OldMerge}
@@ -253,18 +266,28 @@ local
                 of nil then
                     OldMerge
                 [] H|T then
-                    case H
-                    of nil then OldMerge
-                    else
-                        {Helper T {List.mapInd {Map {Mix P2T H.2} fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
-                        % {List.mapInd {Map {Mix P2T H2.2} fun {$ E} E*H2.1 end}}
-                    end 
+                    local
+                        ListToMerge = {Mix P2T H.2}
+                        CompletedListToMerge
+                        ListToMergeLength = {Length ListToMerge}
+                        OldMergeLength = {Length OldMerge}
+                    in
+                        if ListToMergeLength > OldMergeLength then
+                            CompletedListToMerge = {AddZeros (ListToMergeLength-OldMergeLength) OldMerge}
+                            {Helper T {List.mapInd {Map ListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth CompletedListToMerge I}) end}}
+                        elseif ListToMergeLength < OldMergeLength then 
+                            CompletedListToMerge = {AddZeros (~ListToMergeLength+OldMergeLength) ListToMerge}
+                            {Helper T {List.mapInd {Map CompletedListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
+                        else
+                            {Helper T {List.mapInd {Map ListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
+                        end
+                    end
                 else
                     ~1
                 end
             end
-        in
-            {Flatten {Helper MergeList.2 {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}}}
+        in  
+            {Helper MergeList.2 {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}}
             % MergeList.2
             % {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}
         end
@@ -410,6 +433,7 @@ local
     CWD
     Project
     Music
+    Pilou
 in
     % Note = {NoteToExtended c}
     % {Browse Note}
@@ -422,12 +446,14 @@ in
     % {Browse Chord}
     CWD = 'project_template/' % Put here the **absolute** path to the project files
     [Project] = {Link [CWD#'Project2022.ozf']}
-    Music = {Project.load CWD#'joy.dj.oz'}
+    Music = samples([1.0 0.0 0.5])|nil
+    Music2 = samples([0.5 0.5])|nil
     {Browse 0}
     % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
     % {Browse Music.1.1}
     % {Browse {Merge PartitionToTimedList [0.5#Music]}}
-    {Browse {Mix PartitionToTimedList [merge([0.5#Music 0.5#Music])]}}
+    {Browse {Merge PartitionToTimedList [1.0#Music]}}
+    {Browse {Merge PartitionToTimedList [0.5#Music 0.5#Music2]}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
