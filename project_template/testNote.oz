@@ -246,6 +246,30 @@ local
         end
     end
 
+    fun {Merge P2T MergeList}
+        local
+            fun {Helper MergeList OldMerge}
+                case MergeList
+                of nil then
+                    OldMerge
+                [] H|T then
+                    case H
+                    of nil then OldMerge
+                    else
+                        {Helper T {List.mapInd {Map {Mix P2T H.2} fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
+                        % {List.mapInd {Map {Mix P2T H2.2} fun {$ E} E*H2.1 end}}
+                    end 
+                else
+                    ~1
+                end
+            end
+        in
+            {Flatten {Helper MergeList.2 {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}}}
+            % MergeList.2
+            % {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}
+        end
+    end
+
     fun {MixRepeat Music Amount}
         local
             fun {Helper Music Amount}
@@ -298,6 +322,20 @@ local
         end
     end
 
+    % fun {Echo M Delay}
+    %     local
+    %         fun {Helper M Amount Acc}
+    %             if Acc == Delay then
+    %                 M+{Nth Acc - Delay}
+    %             else
+    %                 M|{Helper M Amount-1}
+    %             end
+    %         end
+    %     in
+    %         {Flatten {Helper M Delay}}
+    %     end
+    % end
+
     fun {Mix P2T Music}
         local
             fun {Helper Partition}
@@ -342,6 +380,8 @@ local
                         {Helper {P2T P}}|{HelperMusic P2T T}
                     [] wave(1:Filename) then
                         {Project.readFile Filename}|{HelperMusic P2T T}
+                    [] merge(1:MergeList) then
+                        {Merge P2T MergeList}|{HelperMusic P2T T}
                     [] reverse(1:M) then
                         {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     [] repeat(amount:A 1:M) then
@@ -350,6 +390,8 @@ local
                         {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
                     [] clip(low:SLow high:SHigh 1:M) then
                         {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    % [] echo(delay:D 1:M) then
+                    %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
                     else
                         ~5
                     end
@@ -382,20 +424,42 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
-    % {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
+    % {Browse Music.1.1}
+    % {Browse {Merge PartitionToTimedList [0.5#Music]}}
+    {Browse {Mix PartitionToTimedList [merge([0.5#Music 0.5#Music])]}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [clip(high: 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    % High = note(name:a
+                % octave:5
+                % sharp:false
+                % duration:5.0
+                % instrument: none)
+    % Low = note(name:a
+                % octave:3
+                % sharp:false
+                % duration:5.0
+                % instrument: none)
+% 
+    % Mix_High = {Mix PartitionToTimedList [partition([High])]}
+    % Mix_Low = {Mix PartitionToTimedList [partition([Low])]}
+    % {Browse Mix_High}
+    % {Browse Mix_Low}
+    % {Browse {Clip [0 0 0 0 0 0 0] [2 2 2 2 2 2 2] [~3 ~2 ~1 0 1 2 3]}} 
+    % {Browse {Project.run Mix PartitionToTimedList [clip(high:Mix_High low:Mix_Low 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
     % {Browse List}
     % PartitionChord = c4|b#4|ListOfNotes|a|nil
 
-    TestAddList = [1 2 3 4 5]
+    % TestAddList = [1 2 3 4 5]
     % TestAddList2 = [1 1 1]
+
+    % Test = 0.5#Music
+    % {Browse Test.2}
     
     % {Browse {Clip 2 3 TestAddList}}
 
