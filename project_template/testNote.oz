@@ -345,19 +345,14 @@ local
         end
     end
 
-    % fun {Echo M Delay}
-    %     local
-    %         fun {Helper M Amount Acc}
-    %             if Acc == Delay then
-    %                 M+{Nth Acc - Delay}
-    %             else
-    %                 M|{Helper M Amount-1}
-    %             end
-    %         end
-    %     in
-    %         {Flatten {Helper M Delay}}
-    %     end
-    % end
+    fun {Echo Music Delay Decay P2T}
+        local
+            OriginalMusic = Music
+            DelayedMusic = partition(silence(duration:Delay)|nil)|Music
+        in
+            {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil}
+        end
+    end
 
     fun {Fade Start Out Samples}
         local LengthS Step TimeStart TimeOut StartStep OutStep
@@ -404,6 +399,15 @@ local
 
     fun {Mix P2T Music}
         local
+
+            fun {SilencetoList SamplesAmount Tail}
+                if (SamplesAmount =< 0.0) then
+                    {Helper Tail}
+                else
+                    0.0|{SilencetoList SamplesAmount-1.0 Tail}
+                end
+            end
+
             fun {Helper Partition}
                 case Partition
                 of nil then
@@ -427,6 +431,8 @@ local
                         end
                     [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
                         {MixCalcul H 1.0}|{Helper T}
+                    [] silence(duration:D) then
+                        {SilencetoList D*44100.0 T}
                     else
                         ~2
                     end
@@ -456,8 +462,8 @@ local
                         {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
                     [] clip(low:SLow high:SHigh 1:M) then
                         {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
-                    % [] echo(delay:D 1:M) then
-                    %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
+                    [] echo(delay:D decay:Y 1:Music) then
+                        {Echo Music D Y P2T}|{HelperMusic P2T T}
                     [] fade(start:S out:F 1:M) then
                         {Fade S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     [] cut(start:S finish:F 1:M) then
@@ -493,22 +499,26 @@ in
     % {Browse Chord}
     CWD = 'project_template/' % Put here the **absolute** path to the project files
     [Project] = {Link [CWD#'Project2022.ozf']}
-    Music = {Project.load CWD#'joy.dj.ozf'}
+    Music = samples([1.0 0.0 0.5])|nil
+    Music2 = samples([0.5 0.5])|nil
     {Browse 0}
     % Samples = {Project.readFile CWD#'/wave/animals/cat.wav'}
     % {Browse {IntToFloat {Length Samples}}/44100.0}
     % {Browse {Mix PartitionToTimedList [fade(1:[samples([1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0])] start:3.0/44100.0 out:3.0/44100.0)]}}
     {Browse {Project.run Mix PartitionToTimedList [fade(1:[Music] start:1.0 out:1.0)] 'out2.wav'}}
+    
     % {Browse {Cut 0.5 1.0 {Project.readFile CWD#'/wave/animals/cat.wav'}}}
     % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
     % {Browse Music.1.1}
-    % {Browse {Merge PartitionToTimedList [0.5#[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] 0.5#[samples({Project.readFile CWD#'/wave/animals/cat.wav'})]]}}
-    % {Browse {Mix PartitionToTimedList [merge([0.5#Music])]}}
+    % {Browse {Merge PartitionToTimedList [0.5#Music]}}
+    {Browse Music}
+    {Browse {Echo Music 1.0/44100.0 0.1 PartitionToTimedList}}
+    {Browse {Merge PartitionToTimedList [0.5#Music 0.5#Music2]}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:1 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [cut(start:0.5 finish:1.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [cut(start:0.5 finish:1.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % High = note(name:a
                 % octave:5
                 % sharp:false
