@@ -521,7 +521,7 @@ in
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0/4410.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
     % High = note(name:a
                 % octave:5
                 % sharp:false
