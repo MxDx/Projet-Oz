@@ -1,5 +1,5 @@
 declare
-local
+fun {NoteToExtended Note}
     fun {NoteToExtended Note}
         case Note
         of Name#Octave then
@@ -53,6 +53,8 @@ local
                     case H 
                     of _|_ then
                         {Helper H Duration}|{Helper T Duration}
+                    [] silence(duration:_) then
+                        silence(duration:Duration.seconds)|{Helper T Duration}
                     else 
                         note(name:H.name
                             octave:H.octave
@@ -79,6 +81,8 @@ local
                     case H
                     of _|_ then
                         {Helper Stretch H}|{Helper Stretch T}
+                    [] silence(duration:D) then
+                        silence(duration:(D*Stretch.factor))|{Helper Stretch T}
                     else
                         note(name:H.name
                             octave:H.octave
@@ -138,20 +142,13 @@ local
         end
     end
 
-
     InttoNote
     NotestoInt
     fun {TransposeTrans TransposeTuple}
-        %Notes = c|c#|d|d#|e|f|f#|g|g#|a|a#|b
-        %Correspond aux nombres 1|2|3|4|5|...|12
-        NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12)
+        NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12) %We add one in the code if note is sharp
         InttoNote = itn(1:c#false 2:c#true 3:d#false 4:d#true 5:e#false 6:f#false 7:f#true 8:g#false 9:g#true 10:a#false 11:a#true 12:b#false)
         local
             ExtendedPartition
-            NoteValue
-            TransposedNote
-            Octave
-            NewName
             fun {Helper Semitone Partition}
                 case Partition
                 of nil then 
@@ -160,19 +157,28 @@ local
                     case H
                     of _|_ then
                         {Helper Semitone H}|{Helper Semitone T}
+                    [] silence(duration:_) then
+                        H|{Helper Semitone T}
                     else
-                        if H.sharp then
-                            NoteValue = NotestoInt.(H.name) + 1
-                        else
-                            NoteValue = NotestoInt.(H.name)
+                        local
+                            NoteValue
+                            TransposedNote
+                            Octave
+                            NewName
+                        in
+                            if H.sharp then
+                                NoteValue = NotestoInt.(H.name) + 1
+                            else
+                                NoteValue = NotestoInt.(H.name)
+                            end
+                            TransposedNote = NoteValue + Semitone
+                            Octave = {ComputeOctave TransposedNote H.octave NewName}
+                            note(duration:H.duration 
+                                instrument:H.instrument 
+                                name:((InttoNote.NewName).1) 
+                                octave:Octave 
+                                sharp:((InttoNote.NewName).2))|{Helper Semitone T}
                         end
-                        TransposedNote = NoteValue + Semitone
-                        Octave = {ComputeOctave TransposedNote H.octave NewName}
-                        note(duration:H.duration 
-                            instrument:H.instrument 
-                            name:((InttoNote.NewName).1) 
-                            octave:Octave 
-                            sharp:((InttoNote.NewName).2))|{Helper Semitone T}
                     end
                 else
                     transposeTransError
@@ -180,6 +186,7 @@ local
             end
         in
             ExtendedPartition = {PartitionToTimedList TransposeTuple.1}
+            {Browse ExtendedPartition}
             {Helper TransposeTuple.semitones ExtendedPartition}
         end
     end
@@ -204,6 +211,10 @@ local
                 {AddTogether {DroneTrans H} T}
             [] transpose(semitones:S 1:P) then
                 {AddTogether {TransposeTrans H} T}
+            [] silence(duration:_) then
+                H|{PartitionToTimedList T}
+            [] silence then
+                silence(duration:1.0)|{PartitionToTimedList T}
             else
                 {NoteToExtended H}|{PartitionToTimedList T}
             end
@@ -232,6 +243,47 @@ local
             end
             F = {Pow 2.0 {IntToFloat H}/12.0} * 440.0
             {Helper {FloatToInt Note.duration*44100.0} 0 Div}
+        end
+    end
+
+    fun {MixRepeat Music Amount}
+        local
+            fun {Helper Music Amount}
+                if Amount == 0 then
+                    nil
+                else
+                    Music|{Helper Music Amount-1}
+                end
+            end
+        in
+            {Flatten {Helper Music Amount}}
+        end
+    end
+
+    fun {Loop M S}
+        local
+            fun {Helper M S Length}
+                if ((S-Length) < 0.0) then
+                    local
+                        fun {HelperLast M S Acc}
+                            if S == 0.0 then
+                                nil
+                            else
+                                M.1|{HelperLast M.2 S-(Acc/44100.0) (Acc+1.0)}
+                            end
+                        end
+                    in 
+                        {HelperLast M S 1.0}
+                    end
+                elseif (S-Length) == 0.0 then
+                    M|nil
+                else
+                    M|{Helper M S-Length Length}
+                end
+            end
+        in
+            % {Flatten {Helper M S {IntToFloat{Length M}}/44100.0}}
+            {IntToFloat{Length M}}/44100.0
         end
     end
 
@@ -281,6 +333,10 @@ local
                         {Project.readFile Filename}|{HelperMusic P2T T}
                     [] reverse(1:M) then
                         {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    [] repeat(amount:A 1:M) then
+                        {MixRepeat {Flatten {HelperMusic P2T M}} A}|{HelperMusic P2T T}
+                    [] loop(seconds:S 1:M) then
+                        {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
                     else
                         ~5
                     end
@@ -311,8 +367,10 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
-    {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
-    {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
@@ -328,7 +386,8 @@ in
     % {Browse Music.1.1}
     % {Browse {PartitionToTimedList Music.1.1}}
     % {Browse {Mix PartitionToTimedList Music}}
-    % {Browse {Project.readFile CWD#'/wave/animals/cow.wav'}}
+    % {Browse {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}
+    {Browse {Loop {Project.readFile CWD#'/wave/animals/cat.wav'} 4.445895691609977} }
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
     % {Browse {MixCalcul {NoteToExtended a5} 1.0}}
