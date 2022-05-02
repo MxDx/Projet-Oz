@@ -336,24 +336,23 @@ local
     %     end
     % end
 
+    
+
     fun {Cut Start Finish Sample}
         local LengthS
             fun {Helper Sample Acc} 
-                if Acc == Finish then
-                    % nil
-                    Acc
-                elseif Acc >= LengthS then
-                    0|{Helper Sample.2 (Acc+(1.0/44100.0))}
+                if Acc >= Finish then
+                    nil
+                elseif (Acc-(1.0/44100.0)) >= LengthS then
+                    0|{Helper Sample (Acc+(1.0/44100.0))}
                 elseif Acc < Start then
                     {Helper Sample.2 (Acc+(1.0/44100.0))}
                 else
-                    % Sample.1|{Helper Sample.2 (Acc+(1.0/44100.0))}
-                    % {Helper Sample.2 (Acc+(1.0/44100.0))}
-                    Sample
+                    Sample.1|{Helper Sample.2 (Acc+(1.0/44100.0))}
                 end
             end
         in
-            LengthS = {IntToFloat {Length Sample}}
+            LengthS = {IntToFloat {Length Sample}}/44100.0
             {Flatten {Helper Sample 0.0}}
         end
     end
@@ -414,6 +413,8 @@ local
                         {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     % [] echo(delay:D 1:M) then
                     %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
+                    [] cut(start:S finish:F 1:M) then
+                        {Cut S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     else
                         ~5
                     end
@@ -446,15 +447,16 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
-    % {Browse {Cut 0.5 1.0 {Project.readFile CWD#'/wave/animals/cow.wav'}}}
+    % {Browse {Cut 0.5 1.0 {Project.readFile CWD#'/wave/animals/cat.wav'}}}
     % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
     % {Browse Music.1.1}
     % {Browse {Merge PartitionToTimedList [0.5#Music]}}
-    {Browse {Mix PartitionToTimedList [merge([0.5#Music])]}}
+    % {Browse {Mix PartitionToTimedList [merge([0.5#Music])]}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [cut(start:0.5 finish:1.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % High = note(name:a
                 % octave:5
                 % sharp:false
