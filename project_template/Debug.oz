@@ -1,7 +1,7 @@
 local
     % See project statement for API details.
     % !!! Please remove CWD identifier when submitting your project !!!
-    [Project] = {Link ['Project2022.ozf']}
+    % [Project] = {Link ['Project2022.ozf']}
     Time = {Link ['x-oz://boot/Time']}.1.getReferenceTime
  
     % Antoine Deleux   ---- NOMA : 37422000
@@ -506,7 +506,7 @@ local
  
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
-    Music = {Project.load 'example.dj.oz'}
+    % Music = {Project.load 'example.dj.oz'}
     Start
  
  in
@@ -517,11 +517,12 @@ local
  
     % Add variables to this list to avoid "local variable used only once"
     % warnings.
-    {ForAll [NoteToExtended Music] Wait}
+    % {ForAll [NoteToExtended Music] Wait}
     
     % Calls your code, prints the result and outputs the result to `out.wav`.
     % You don't need to modify this.
-    {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
+    {Browse {Cut 5.0/44100.0 9.0/44100.0 [1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0]}}
+    % {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
     
     % Shows the total time to run your code.
     {Browse {IntToFloat {Time}-Start} / 1000.0}

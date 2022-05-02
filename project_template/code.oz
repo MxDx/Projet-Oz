@@ -11,9 +11,14 @@ local
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
    % Translate a note to the extended notation.
+   fun {Normalize E}
+        {IntToFloat {FloatToInt E*100000000.0}}
+    end
+
    fun {NoteToExtended Note}
       case Note
-      of Name#Octave then
+      of nil then nil
+      [] Name#Octave then
          note(name:Name octave:Octave sharp:true duration:1.0 instrument:none)
       [] Atom then
          case {AtomToString Atom}
@@ -48,32 +53,33 @@ local
 
    % function that processes a Duration Record into a timed list
    fun {DurationTrans DurationTuple}
-      local ExtendedPartition 
-          fun {Helper Partition Duration}
-              case Partition
-              of nil then nil
-              [] H|T then
-                  case H 
-                  of _|_ then
-                      {Helper H Duration}|{Helper T Duration}
-                  [] silence(duration:_) then
-                      silence(duration:Duration.seconds)|{Helper T Duration}
-                  else 
-                      note(name:H.name
-                          octave:H.octave
-                          sharp:H.sharp
-                          duration:Duration.seconds
-                          instrument:H.instrument)|{Helper T Duration}
-                  end
-              else
-                  errorDurationTrans
-              end
-          end
-      in
-          ExtendedPartition = {PartitionToTimedList DurationTuple.1}
-          {Helper ExtendedPartition DurationTuple}
-      end
-  end
+    local ExtendedPartition 
+        fun {Helper Partition Duration}
+            case Partition
+            of nil then nil
+            [] H|T then
+                case H 
+                of nil then nil 
+                [] _|_ then
+                    {Helper H Duration}|{Helper T Duration}
+                [] silence(duration:_) then
+                    silence(duration:Duration.seconds)|{Helper T Duration}
+                else 
+                    note(name:H.name
+                        octave:H.octave
+                        sharp:H.sharp
+                        duration:Duration.seconds
+                        instrument:H.instrument)|{Helper T Duration}
+                end
+            else
+                errorDurationTrans
+            end
+        end
+    in
+        ExtendedPartition = {PartitionToTimedList DurationTuple.1}
+        {Helper ExtendedPartition DurationTuple}
+    end
+end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    
@@ -217,7 +223,8 @@ local
           nil
       [] H|T then
           case H 
-          of _|_ then
+          of nil then nil 
+          [] _|_ then
               {PartitionToTimedList H}|{PartitionToTimedList T}
           [] note(duration:D instrument:I name:N octave:O sharp:S) then
               H|{PartitionToTimedList T}
@@ -331,7 +338,7 @@ local
                 if (S-Length) < 0.0 then
                     local
                         fun {HelperLast M S}
-                            if S =< 0.0 then
+                            if {Normalize S} =< 0.0 then
                                 nil
                             else
                                 M.1|{HelperLast M.2 S-(1.0/44100.0)}
@@ -354,8 +361,8 @@ local
     fun {Clip Low High M}
         local
             fun {Helper I E} 
-                if E =< {Nth Low I} then {Nth Low I}
-                elseif E >= {Nth High I} then {Nth High I} 
+                if E =< Low then Low
+                elseif E >= High then High 
                 else E end 
             end
         in
@@ -397,22 +404,7 @@ local
     end
 
     fun {Cut Start Finish Samples}
-        local LengthS
-            fun {Helper Sample Acc} 
-                if Acc >= Finish then
-                    nil
-                elseif (Acc-(1.0/44100.0)) >= LengthS then
-                    0|{Helper Sample (Acc+(1.0/44100.0))}
-                elseif Acc < Start then
-                    {Helper Sample.2 (Acc+(1.0/44100.0))}
-                else
-                    Sample.1|{Helper Sample.2 (Acc+(1.0/44100.0))}
-                end
-            end
-        in
-            LengthS = {IntToFloat {Length Samples}}/44100.0
-            {Flatten {Helper Samples 0.0}}
-        end
+        {List.drop {List.take Samples {FloatToInt Finish*44100.0}} {FloatToInt Start*44100.0}}
     end
 
     fun {Mix P2T Music}
