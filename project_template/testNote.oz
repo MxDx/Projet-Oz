@@ -286,6 +286,18 @@ local
         end
     end
 
+    fun {Clip Low High M}
+        local
+            fun {Helper I E} 
+                if E =< {Nth Low I} then {Nth Low I}
+                elseif E >= {Nth High I} then {Nth High I} 
+                else E end 
+            end
+        in
+            {List.mapInd M Helper}
+        end
+    end
+
     fun {Mix P2T Music}
         local
             fun {Helper Partition}
@@ -336,6 +348,8 @@ local
                         {MixRepeat {Flatten {HelperMusic P2T M}} A}|{HelperMusic P2T T}
                     [] loop(seconds:S 1:M) then
                         {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
+                    [] clip(low:SLow high:SHigh 1:M) then
+                        {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     else
                         ~5
                     end
@@ -370,17 +384,20 @@ in
     {Browse 0}
     % {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
-    {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
+    % {Browse {Project.run Mix PartitionToTimedList [clip(high: 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
     % {Browse List}
     % PartitionChord = c4|b#4|ListOfNotes|a|nil
 
-    % TestAddList = [1 2 3]
+    TestAddList = [1 2 3 4 5]
     % TestAddList2 = [1 1 1]
+    
+    % {Browse {Clip 2 3 TestAddList}}
 
     % {Browse {List.mapInd TestAddList fun {$ I E} (E + {Nth TestAddList2 I}) end}}
     % Factor = 2.0
@@ -388,7 +405,7 @@ in
     % {Browse Music.1.1}
     % {Browse {PartitionToTimedList Music.1.1}}
     % {Browse {Mix PartitionToTimedList Music}}
-    {Browse {Length {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}}
+    % {Browse {Length {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}}
     % {Browse 1}
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
