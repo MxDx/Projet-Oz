@@ -360,19 +360,14 @@ local
         end
     end
 
-    % fun {Echo M Delay}
-    %     local
-    %         fun {Helper M Amount Acc}
-    %             if Acc == Delay then
-    %                 M+{Nth Acc - Delay}
-    %             else
-    %                 M|{Helper M Amount-1}
-    %             end
-    %         end
-    %     in
-    %         {Flatten {Helper M Delay}}
-    %     end
-    % end
+    fun {Echo Music Delay Decay P2T}
+        local
+            OriginalMusic = Music
+            DelayedMusic = partition(silence(duration:Delay)|nil)|Music
+        in
+            {Merge P2T (1.0-Decay)#OriginalMusic|Decay#DelayedMusic|nil}
+        end
+    end
 
     fun {Fade Start Out Samples}
         local LengthS Step TimeStart TimeOut StartStep OutStep
@@ -419,76 +414,87 @@ local
 
     fun {Mix P2T Music}
         local
+
+            fun {SilencetoList SamplesAmount Tail}
+                if (SamplesAmount =< 0.0) then
+                    {Helper Tail}
+                else
+                    0.0|{SilencetoList SamplesAmount-1.0 Tail}
+                end
+            end
+
             fun {Helper Partition}
-            case Partition
-            of nil then
-                nil
-            [] H|T then
-                case H
-                of HChord|TChord then
-                    local ChordAdd
-                        fun {HelperChord Old Current Div}
-                            case Current
-                            of nil then Old
-                            [] H2|T2 then
-                                {HelperChord {List.mapInd {MixCalcul H2 Div} fun {$ I E} (E + {Nth Old I}) end} T2 Div}
-                            else
-                                ~3
+                case Partition
+                of nil then
+                    nil
+                [] H|T then
+                    case H
+                    of HChord|TChord then
+                        local ChordAdd
+                            fun {HelperChord Old Current Div}
+                                case Current
+                                of nil then Old
+                                [] H2|T2 then
+                                    {HelperChord {List.mapInd {MixCalcul H2 Div} fun {$ I E} (E + {Nth Old I}) end} T2 Div}
+                                else
+                                    ~3
+                                end
                             end
+                        in 
+                            % {Map {HelperChord {MixCalcul HChord} TChord} fun {$ E} (E/{IntToFloat {Length H}}) end}
+                            {HelperChord {MixCalcul HChord {IntToFloat {Length H}}} TChord {IntToFloat {Length H}}}
                         end
-                    in 
-                        % {Map {HelperChord {MixCalcul HChord} TChord} fun {$ E} (E/{IntToFloat {Length H}}) end}
-                        {HelperChord {MixCalcul HChord {IntToFloat {Length H}}} TChord {IntToFloat {Length H}}}
+                    [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
+                        {MixCalcul H 1.0}|{Helper T}
+                    [] silence(duration:D) then
+                        {SilencetoList D*44100.0 T}
+                    else
+                        ~2
                     end
-                [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
-                    {MixCalcul H 1.0}|{Helper T}
                 else
-                    ~2
+                    ~1
                 end
-            else
-                ~1
             end
-        end
-        fun {HelperMusic P2T Music}
-            case Music
-            of nil then nil
-            [] H|T then
-                case H
+            fun {HelperMusic P2T Music}
+                case Music
                 of nil then nil
-                [] samples(1:S) then
-                    S|{HelperMusic P2T T}
-                [] partition(1:P) then
-                    {Helper {P2T P}}|{HelperMusic P2T T}
-                [] wave(1:Filename) then
-                    {Project.readFile Filename}|{HelperMusic P2T T}
-                [] merge(1:MergeList) then
-                    {Merge P2T MergeList}|{HelperMusic P2T T}
-                [] reverse(1:M) then
-                    {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
-                [] repeat(amount:A 1:M) then
-                    {MixRepeat {Flatten {HelperMusic P2T M}} A}|{HelperMusic P2T T}
-                [] loop(seconds:S 1:M) then
-                    {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
-                [] clip(low:SLow high:SHigh 1:M) then
-                    {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
-                % [] echo(delay:D 1:M) then
-                %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
-                [] fade(start:S out:F 1:M) then
-                    {Fade S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
-                [] cut(start:S finish:F 1:M) then
-                    {Cut S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                [] H|T then
+                    case H
+                    of nil then nil
+                    [] samples(1:S) then
+                        S|{HelperMusic P2T T}
+                    [] partition(1:P) then
+                        {Helper {P2T P}}|{HelperMusic P2T T}
+                    [] wave(1:Filename) then
+                        {Project.readFile Filename}|{HelperMusic P2T T}
+                    [] merge(1:MergeList) then
+                        {Merge P2T MergeList}|{HelperMusic P2T T}
+                    [] reverse(1:M) then
+                        {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    [] repeat(amount:A 1:M) then
+                        {MixRepeat {Flatten {HelperMusic P2T M}} A}|{HelperMusic P2T T}
+                    [] loop(seconds:S 1:M) then
+                        {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
+                    [] clip(low:SLow high:SHigh 1:M) then
+                        {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    [] echo(delay:D decay:Y 1:Music) then
+                        {Echo Music D Y P2T}|{HelperMusic P2T T}
+                    [] fade(start:S out:F 1:M) then
+                        {Fade S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    [] cut(start:S finish:F 1:M) then
+                        {Cut S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                    else
+                        ~5
+                    end
                 else
-                    ~5
+                    ~4
                 end
-            else
-                ~4
             end
+        in
+            {Flatten {HelperMusic P2T Music}}
+            % {Helper {P2T Music.1.1}}
         end
-    in
-        {Flatten {HelperMusic P2T Music}}
-        % {Helper {P2T Music.1.1}}
     end
-end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
