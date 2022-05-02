@@ -61,14 +61,6 @@ local
                 [] silence(duration:_) then
                     silence(duration:Duration)|{Helper T Duration}
                 else 
-                  else 
-                else 
-                  else 
-                else 
-                  else 
-                else 
-                  else 
-                else 
                     note(name:H.name
                         octave:H.octave
                         sharp:H.sharp
