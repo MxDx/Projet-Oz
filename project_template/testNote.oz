@@ -265,15 +265,15 @@ local
             fun {Helper M S Length}
                 if (S-Length) < 0.0 then
                     local
-                        fun {HelperLast M S Acc}
-                            if S == 0.0 then
+                        fun {HelperLast M S}
+                            if S =< 0.0 then
                                 nil
                             else
-                                M.1|{HelperLast M.2 S-(Acc/44100.0) (Acc+1.0)}
+                                M.1|{HelperLast M.2 S-(1.0/44100.0)}
                             end
                         end
                     in 
-                        {HelperLast M S 1.0}
+                        {HelperLast M S}
                     end
                 elseif (S-Length) == 0.0 then
                     M|nil
@@ -282,8 +282,7 @@ local
                 end
             end
         in
-            % {Flatten {Helper M S {IntToFloat{Length M}}/44100.0}}
-            {IntToFloat{Length M}}/44100.0
+            {Flatten {Helper M S {IntToFloat{Length M}}/44100.0}}
         end
     end
 
@@ -367,10 +366,11 @@ in
     % {Browse Chord}
     CWD = 'project_template/' % Put here the **absolute** path to the project files
     [Project] = {Link [CWD#'Project2022.ozf']}
-    % Music = {Project.load CWD#'joy.dj.oz'}
+    Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
+    % {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
-    % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % ListOfNotes = (c4|b#6|nil)
@@ -388,7 +388,7 @@ in
     % {Browse Music.1.1}
     % {Browse {PartitionToTimedList Music.1.1}}
     % {Browse {Mix PartitionToTimedList Music}}
-    {Browse {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}
+    {Browse {Length {Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])]}}}
     % {Browse 1}
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
