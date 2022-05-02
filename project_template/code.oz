@@ -240,10 +240,255 @@ local
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-   fun {Mix P2T Music}
-      % TODO
-      {Project.readFile CWD#'wave/animals/cow.wav'}
-   end
+   fun {MixCalcul Note Div}
+    local NotestoInt H F
+        fun {Helper Amount Acc Div}
+            if Amount == Acc then
+                nil
+            else
+                (0.5 * {Float.sin ((2.0*3.14159265359*{IntToFloat Acc}*F)/44100.0)})/Div|{Helper Amount Acc+1 Div}
+            end
+        end
+    in
+        NotestoInt = nti(c:1 d:3 e:5 f:6 g:8 a:10 b:12)
+        if Note.sharp then
+            H = 12*(Note.octave - 4) + NotestoInt.(Note.name) + 1 - 10
+        else
+            H = 12*(Note.octave - 4) + NotestoInt.(Note.name) - 10
+        end
+        F = {Pow 2.0 {IntToFloat H}/12.0} * 440.0
+        {Helper {FloatToInt Note.duration*44100.0} 0 Div}
+    end
+    end
+
+    fun {AddZeros NbZeros List}
+        case List
+        of nil then
+            if NbZeros > 0 then
+                0.0|{AddZeros NbZeros-1 nil}
+            else
+                nil
+            end
+        [] H|T then
+            H|{AddZeros NbZeros T}
+        end
+    end
+
+    fun {Merge P2T MergeList}
+        local
+            fun {Helper MergeList OldMerge}
+                case MergeList
+                of nil then
+                    OldMerge
+                [] H|T then
+                    local
+                        ListToMerge = {Mix P2T H.2}
+                        CompletedListToMerge
+                        ListToMergeLength = {Length ListToMerge}
+                        OldMergeLength = {Length OldMerge}
+                    in
+                        if ListToMergeLength > OldMergeLength then
+                            CompletedListToMerge = {AddZeros (ListToMergeLength-OldMergeLength) OldMerge}
+                            {Helper T {List.mapInd {Map ListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth CompletedListToMerge I}) end}}
+                        elseif ListToMergeLength < OldMergeLength then 
+                            CompletedListToMerge = {AddZeros (~ListToMergeLength+OldMergeLength) ListToMerge}
+                            {Helper T {List.mapInd {Map CompletedListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
+                        else
+                            {Helper T {List.mapInd {Map ListToMerge fun {$ E} E*H.1 end} fun {$ I E} (E + {Nth OldMerge I}) end}}
+                        end
+                    end
+                else
+                    ~1
+                end
+            end
+        in  
+            {Helper MergeList.2 {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}}
+            % MergeList.2
+            % {Map {Mix P2T MergeList.1.2} fun {$ E} E*MergeList.1.1 end}
+        end
+    end
+
+    fun {MixRepeat Music Amount}
+        local
+            fun {Helper Music Amount}
+                if Amount == 0 then
+                    nil
+                else
+                    Music|{Helper Music Amount-1}
+                end
+            end
+        in
+            {Flatten {Helper Music Amount}}
+        end
+    end
+
+    fun {Loop M S}
+        local
+            fun {Helper M S Length}
+                if (S-Length) < 0.0 then
+                    local
+                        fun {HelperLast M S}
+                            if S =< 0.0 then
+                                nil
+                            else
+                                M.1|{HelperLast M.2 S-(1.0/44100.0)}
+                            end
+                        end
+                    in 
+                        {HelperLast M S}
+                    end
+                elseif (S-Length) == 0.0 then
+                    M|nil
+                else
+                    M|{Helper M S-Length Length}
+                end
+            end
+        in
+            {Flatten {Helper M S {IntToFloat{Length M}}/44100.0}}
+        end
+    end
+
+    fun {Clip Low High M}
+        local
+            fun {Helper I E} 
+                if E =< {Nth Low I} then {Nth Low I}
+                elseif E >= {Nth High I} then {Nth High I} 
+                else E end 
+            end
+        in
+            {List.mapInd M Helper}
+        end
+    end
+
+    % fun {Echo M Delay}
+    %     local
+    %         fun {Helper M Amount Acc}
+    %             if Acc == Delay then
+    %                 M+{Nth Acc - Delay}
+    %             else
+    %                 M|{Helper M Amount-1}
+    %             end
+    %         end
+    %     in
+    %         {Flatten {Helper M Delay}}
+    %     end
+    % end
+
+    fun {Fade Start Out Samples}
+        local LengthS Step TimeStart TimeOut StartStep OutStep
+            fun {Helper Sample Acc AccStart AccOut}
+                if Sample == nil then nil 
+                elseif Acc =< TimeStart then
+                    Sample.1*AccStart|{Helper Sample.2 Acc+1.0 AccStart+StartStep AccOut}
+                elseif Acc >= TimeOut then
+                    Sample.1*AccOut|{Helper Sample.2 Acc+1.0 AccStart AccOut-OutStep}
+                else
+                    Sample.1|{Helper Sample.2 Acc+1.0 AccStart AccOut}
+                end
+            end
+        in
+            LengthS = {IntToFloat {Length Samples}}/44100.0
+            Step = 1.0/44100.0
+            TimeStart = Start*44100.0
+            TimeOut = (LengthS-Out)*44100.0
+            StartStep = 1.0/(44100.0*Start)
+            OutStep = 1.0/(44100.0*Out)
+
+            {Helper Samples 0.0 0.0 1.0-OutStep}
+        end
+    end
+
+    fun {Cut Start Finish Samples}
+        local LengthS
+            fun {Helper Sample Acc} 
+                if Acc >= Finish then
+                    nil
+                elseif (Acc-(1.0/44100.0)) >= LengthS then
+                    0|{Helper Sample (Acc+(1.0/44100.0))}
+                elseif Acc < Start then
+                    {Helper Sample.2 (Acc+(1.0/44100.0))}
+                else
+                    Sample.1|{Helper Sample.2 (Acc+(1.0/44100.0))}
+                end
+            end
+        in
+            LengthS = {IntToFloat {Length Samples}}/44100.0
+            {Flatten {Helper Samples 0.0}}
+        end
+    end
+
+    fun {Mix P2T Music}
+        local
+            fun {Helper Partition}
+            case Partition
+            of nil then
+                nil
+            [] H|T then
+                case H
+                of HChord|TChord then
+                    local ChordAdd
+                        fun {HelperChord Old Current Div}
+                            case Current
+                            of nil then Old
+                            [] H2|T2 then
+                                {HelperChord {List.mapInd {MixCalcul H2 Div} fun {$ I E} (E + {Nth Old I}) end} T2 Div}
+                            else
+                                ~3
+                            end
+                        end
+                    in 
+                        % {Map {HelperChord {MixCalcul HChord} TChord} fun {$ E} (E/{IntToFloat {Length H}}) end}
+                        {HelperChord {MixCalcul HChord {IntToFloat {Length H}}} TChord {IntToFloat {Length H}}}
+                    end
+                [] note(duration:_ instrument:_ name:_ octave:_ sharp:_) then
+                    {MixCalcul H 1.0}|{Helper T}
+                else
+                    ~2
+                end
+            else
+                ~1
+            end
+        end
+        fun {HelperMusic P2T Music}
+            case Music
+            of nil then nil
+            [] H|T then
+                case H
+                of nil then nil
+                [] samples(1:S) then
+                    S|{HelperMusic P2T T}
+                [] partition(1:P) then
+                    {Helper {P2T P}}|{HelperMusic P2T T}
+                [] wave(1:Filename) then
+                    {Project.readFile Filename}|{HelperMusic P2T T}
+                [] merge(1:MergeList) then
+                    {Merge P2T MergeList}|{HelperMusic P2T T}
+                [] reverse(1:M) then
+                    {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                [] repeat(amount:A 1:M) then
+                    {MixRepeat {Flatten {HelperMusic P2T M}} A}|{HelperMusic P2T T}
+                [] loop(seconds:S 1:M) then
+                    {Loop {Flatten {HelperMusic P2T M}} S}|{HelperMusic P2T T}
+                [] clip(low:SLow high:SHigh 1:M) then
+                    {Clip SLow SHigh {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                % [] echo(delay:D 1:M) then
+                %     {Echo {Flatten {HelperMusic P2T M}} D}|{HelperMusic P2T T}
+                [] fade(start:S out:F 1:M) then
+                    {Fade S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                [] cut(start:S finish:F 1:M) then
+                    {Cut S F {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
+                else
+                    ~5
+                end
+            else
+                ~4
+            end
+        end
+    in
+        {Flatten {HelperMusic P2T Music}}
+        % {Helper {P2T Music.1.1}}
+    end
+end
 
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

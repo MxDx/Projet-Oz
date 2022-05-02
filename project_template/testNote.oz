@@ -362,27 +362,24 @@ local
     fun {Fade Start Out Samples}
         local LengthS Step TimeStart TimeOut StartStep OutStep
             fun {Helper Sample Acc AccStart AccOut}
-                {Show 1}
                 if Sample == nil then nil 
                 elseif Acc =< TimeStart then
-                    % {Show Acc}
                     Sample.1*AccStart|{Helper Sample.2 Acc+1.0 AccStart+StartStep AccOut}
-                elseif Acc > TimeOut then
-                    {Show Acc}
+                elseif Acc >= TimeOut then
                     Sample.1*AccOut|{Helper Sample.2 Acc+1.0 AccStart AccOut-OutStep}
                 else
-                    Sample.1|{Helper Sample.2 Acc+Step AccStart AccOut}
+                    Sample.1|{Helper Sample.2 Acc+1.0 AccStart AccOut}
                 end
             end
         in
             LengthS = {IntToFloat {Length Samples}}/44100.0
             Step = 1.0/44100.0
-            TimeStart = {IntToFloat Start}*44100.0
-            TimeOut = (LengthS-{IntToFloat Out})*44100.0
-            StartStep = {IntToFloat Start}/44100.0
-            OutStep = {IntToFloat Out}/44100.0
-            {Show LengthS}
-            {Helper Samples 0.0 0.0 1.0}
+            TimeStart = Start*44100.0
+            TimeOut = (LengthS-Out)*44100.0
+            StartStep = 1.0/(44100.0*Start)
+            OutStep = 1.0/(44100.0*Out)
+
+            {Helper Samples 0.0 0.0 1.0-OutStep}
         end
     end
 
@@ -496,13 +493,12 @@ in
     % {Browse Chord}
     CWD = 'project_template/' % Put here the **absolute** path to the project files
     [Project] = {Link [CWD#'Project2022.ozf']}
-    Music = samples([1.0 0.0 0.5])|nil
-    Music2 = samples([0.5 0.5])|nil
+    Music = {Project.load CWD#'joy.dj.ozf'}
     {Browse 0}
     % Samples = {Project.readFile CWD#'/wave/animals/cat.wav'}
     % {Browse {IntToFloat {Length Samples}}/44100.0}
-    % {Browse {Mix PartitionToTimedList [fade(1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] start:1 out:1)]}}
-    {Browse {Project.run Mix PartitionToTimedList [fade(1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})] start:1 out:1)] 'out2.wav'}}
+    % {Browse {Mix PartitionToTimedList [fade(1:[samples([1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0])] start:3.0/44100.0 out:3.0/44100.0)]}}
+    {Browse {Project.run Mix PartitionToTimedList [fade(1:[Music] start:1.0 out:1.0)] 'out2.wav'}}
     % {Browse {Cut 0.5 1.0 {Project.readFile CWD#'/wave/animals/cat.wav'}}}
     % {Browse {Project.run Mix PartitionToTimedList [merge([0.5#Music])] 'out.wav'}}
     % {Browse Music.1.1}
