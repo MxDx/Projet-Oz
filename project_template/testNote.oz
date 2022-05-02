@@ -2,7 +2,8 @@ declare
 local
     fun {NoteToExtended Note}
         case Note
-        of Name#Octave then
+        of nil then nil
+        [] Name#Octave then
            note(name:Name octave:Octave sharp:true duration:1.0 instrument:none)
         [] Atom then
            case {AtomToString Atom}
@@ -502,6 +503,8 @@ in
     Music = samples([1.0 0.0 0.5])|nil
     Music2 = samples([0.5 0.5])|nil
     {Browse 0}
+
+    {Browse {PartitionToTimedList [nil]}}
     % Samples = {Project.readFile CWD#'/wave/animals/cat.wav'}
     % {Browse {IntToFloat {Length Samples}}/44100.0}
     % {Browse {Mix PartitionToTimedList [fade(1:[samples([1.0 1.0 1.0 1.0 1.0 1.0 1.0 1.0])] start:3.0/44100.0 out:3.0/44100.0)]}}
@@ -518,7 +521,7 @@ in
     % {Browse {Project.run Mix PartitionToTimedList [loop(seconds:2.0 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     % {Browse {Project.run Mix PartitionToTimedList [repeat(amount:2 1:[samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
-    {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0/4410.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [echo(delay:1.0 decay:0.5 1:[samples({Project.readFile CWD#'/wave/animals/cat.wav'})])] 'out3.wav'}}
     % High = note(name:a
                 % octave:5
                 % sharp:false
