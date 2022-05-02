@@ -273,12 +273,14 @@ local
                 [] H|T then
                     case H
                     of nil then nil
-                    [] samples(1:_) then
-                        H|{HelperMusic P2T T}
+                    [] samples(1:S) then
+                        S|{HelperMusic P2T T}
                     [] partition(1:P) then
                         {Helper {P2T P}}|{HelperMusic P2T T}
                     [] wave(1:Filename) then
                         {Project.readFile Filename}|{HelperMusic P2T T}
+                    [] reverse(1:M) then
+                        {Reverse {Flatten {HelperMusic P2T M}}}|{HelperMusic P2T T}
                     else
                         ~5
                     end
@@ -309,7 +311,8 @@ in
     [Project] = {Link [CWD#'Project2022.ozf']}
     Music = {Project.load CWD#'joy.dj.oz'}
     {Browse 0}
-    % {Browse {Project.run Mix PartitionToTimedList Music 'out.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [samples({Project.readFile CWD#'/wave/animals/cow.wav'})] 'out.wav'}}
+    {Browse {Project.run Mix PartitionToTimedList [reverse([samples({Project.readFile CWD#'/wave/animals/cow.wav'})])] 'outR.wav'}}
     ListOfNotes = (c4|b#6|nil)
     % {Browse ListOfNotes}
     % List = {ChordToExtended ListOfNotes}
@@ -329,8 +332,8 @@ in
 
     % {Browse {MixCalcul {NoteToExtended a4} 1.0}}
     % {Browse {MixCalcul {NoteToExtended a5} 1.0}}
-    {Browse {Nth {MixCalcul {NoteToExtended a4} 1.0} 22051}}
-    {Browse {Length {MixCalcul {NoteToExtended a4} 1.0}}}
+    % {Browse {Nth {MixCalcul {NoteToExtended c#5} 1.0} 11}}
+    % {Browse {Length {MixCalcul {NoteToExtended a4} 1.0}}}
     % {Browse {Nth {MixCalcul {NoteToExtended a5} 1.0} 2}}
     % {Browse [{ChordToExtended [a4 b4]}]}
     % {Browse {Mix PartitionToTimedList [partition([{ChordToExtended [a4 a4]}])]}}
